@@ -57,10 +57,10 @@ const Campaigns = () => {
   
   const navigate = useNavigate();
 
-  useEffect(() => {
-    // Fetch ad accounts when component mounts
-    loadAdAccounts();
-  }, []);
+  // useEffect(() => {
+  //   // Fetch ad accounts when component mounts
+  //   loadAdAccounts();
+  // }, []);
 
   useEffect(() => {
     // Fetch campaigns when account is selected or page changes
@@ -70,31 +70,31 @@ const Campaigns = () => {
     loadCampaigns(selectedAccount, currentPage);
   }, [selectedAccount, currentPage]);
 
-  const loadAdAccounts = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      setShowRetryAction({ visible: false, type: 'accounts' });
-      const accounts = await fetchAdAccounts();
-      setAdAccounts(accounts);
-      if (accounts.length > 0) {
-        setSelectedAccount(accounts[0].id);
-      }
-    } catch (error) {
-      const errorMessage = 'Failed to load ad accounts. Please try again later.';
-      setError(errorMessage);
-      showDialog('error', 'Error', errorMessage, false);
+  // const loadAdAccounts = async () => {
+  //   try {
+  //     setLoading(true);
+  //     setError(null);
+  //     setShowRetryAction({ visible: false, type: 'accounts' });
+  //     const accounts = await fetchAdAccounts();
+  //     setAdAccounts(accounts);
+  //     if (accounts.length > 0) {
+  //       setSelectedAccount(accounts[0].id);
+  //     }
+  //   } catch (error) {
+  //     const errorMessage = 'Failed to load ad accounts. Please try again later.';
+  //     setError(errorMessage);
+  //     showDialog('error', 'Error', errorMessage, false);
       
-      // Show retry action after 1 second
-      setTimeout(() => {
-        setShowRetryAction({ visible: true, type: 'accounts' });
-      }, 1000);
+  //     // Show retry action after 1 second
+  //     setTimeout(() => {
+  //       setShowRetryAction({ visible: true, type: 'accounts' });
+  //     }, 1000);
       
-      console.error('Error fetching ad accounts:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  //     console.error('Error fetching ad accounts:', error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   const loadCampaigns = async (accountId: string, page: number) => {
     try {
@@ -176,24 +176,30 @@ const Campaigns = () => {
     setCurrentPage(1); // Reset to first page when account changes
   };
 
-  const handleStatusToggle = async (campaignId: string, currentStatus: string) => {
-    try {
-      setStatusLoading(campaignId);
-      const newStatus = currentStatus === "ACTIVE" ? "PAUSED" : "ACTIVE";
-      const response = await updateCampaignStatus(campaignId, newStatus);
+  // const handleStatusToggle = async (campaignId: string, currentStatus: string) => {
+  //   try {
+  //     setStatusLoading(campaignId);
+  //     const newStatus = currentStatus === "ACTIVE" ? "PAUSED" : "ACTIVE";
+  //     const response = await updateCampaignStatus(campaignId, newStatus);
       
-      if (response.data.success) {
-        // Refetch campaigns to get the latest data
-        loadCampaigns(selectedAccount, currentPage);
+  //     if (response.data.success) {
+  //       // Refetch campaigns to get the latest data
+  //       loadCampaigns(selectedAccount, currentPage);
         
-        showDialog('success', 'Status Updated', response.message, false);
-      }
-    } catch (error) {
-      console.error('Error updating campaign status:', error);
-      showDialog('error', 'Status Update Failed', 'Failed to update campaign status. Please try again later.', false);
-    } finally {
-      setStatusLoading(null);
-    }
+  //       showDialog('success', 'Status Updated', response.message, false);
+  //     }
+  //   } catch (error) {
+  //     console.error('Error updating campaign status:', error);
+  //     showDialog('error', 'Status Update Failed', 'Failed to update campaign status. Please try again later.', false);
+  //   } finally {
+  //     setStatusLoading(null);
+  //   }
+  // };
+
+  const handleStatusToggle = (campaignId: string, currentStatus: string) => {
+    setCampaigns(campaigns.map(campaign => 
+      campaign.id === campaignId ? { ...campaign, status: currentStatus === "ACTIVE" ? "PAUSED" : "ACTIVE" } : campaign
+    ));
   };
 
   const showDialog = (variant: 'error' | 'success', title: string, description: string, showActionButton: boolean) => {
@@ -210,13 +216,13 @@ const Campaigns = () => {
     setIsDialogOpen(open);
   };
 
-  const handleRetryAction = () => {
-    if (showRetryAction.type === 'accounts') {
-      loadAdAccounts();
-    } else if (showRetryAction.type === 'campaigns') {
-      loadCampaigns(selectedAccount, currentPage);
-    }
-  };
+  // const handleRetryAction = () => {
+  //   if (showRetryAction.type === 'accounts') {
+  //     loadAdAccounts();
+  //   } else if (showRetryAction.type === 'campaigns') {
+  //     loadCampaigns(selectedAccount, currentPage);
+  //   }
+  // };
 
   return (
     <div>
@@ -287,7 +293,7 @@ const Campaigns = () => {
           </div>
         </div>
 
-        {showRetryAction.visible && (
+        {/* {showRetryAction.visible && (
           <div className="flex items-center justify-center p-4 bg-amber-50 border border-amber-100 rounded-md">
             <div className="text-amber-800 mr-2">
               {showRetryAction.type === 'accounts' 
@@ -304,7 +310,7 @@ const Campaigns = () => {
               Retry
             </Button>
           </div>
-        )}
+        )} */}
 
         <div className="border rounded-md overflow-hidden">
           {loading ? (
