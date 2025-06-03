@@ -4,25 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Search } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import CreateAudienceDialog from '@/components/audience/CreateAudienceDialog';
-
-const audiencesData = [
-  {
-    id: 'aud-1',
-    name: 'Website Visitors - Last 30 Days',
-    type: 'Website Visitors',
-    source: 'Facebook Pixel',
-    size: '0',
-    status: 'Active'
-  },
-  {
-    id: 'aud-2',
-    name: 'Previous Customers',
-    type: 'Custom',
-    source: 'Uploaded List',
-    size: '250',
-    status: 'Active'
-  }
-];
+import audiencesData from '@/data/dummyAudiences';
 
 const Audiences = () => {
   const [isCreateAudienceOpen, setIsCreateAudienceOpen] = useState(false);
@@ -72,7 +54,11 @@ const Audiences = () => {
                   <TableCell className="py-4 px-4">{audience.source}</TableCell>
                   <TableCell className="py-4 px-4">{audience.size}</TableCell>
                   <TableCell className="py-4 px-4">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      audience.status === 'Active' 
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-yellow-100 text-yellow-800'
+                    }`}>
                       {audience.status}
                     </span>
                   </TableCell>

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { ArrowLeft, X } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -10,6 +9,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import audiencesData, { addNewAudience } from '@/data/dummyAudiences';
+import { useNavigate } from 'react-router-dom';
 
 type AudienceType = 'initial' | 'website-visitors' | 'lookalike';
 
@@ -18,20 +19,90 @@ interface CreateAudienceDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+interface AudienceFormData {
+  name: string;
+  source: string;
+  days?: number;
+  sourceAudience?: string;
+}
+
 const CreateAudienceDialog = ({ open, onOpenChange }: CreateAudienceDialogProps) => {
   const [currentView, setCurrentView] = useState<AudienceType>('initial');
+  const [formData, setFormData] = useState<AudienceFormData>({
+    name: '',
+    source: '',
+    days: 60,
+    sourceAudience: ''
+  });
+  const navigate = useNavigate();
   
   const handleBack = () => {
     setCurrentView('initial');
+    setFormData({
+      name: '',
+      source: '',
+      days: 60,
+      sourceAudience: ''
+    });
   };
 
   const handleClose = () => {
     setCurrentView('initial');
+    setFormData({
+      name: '',
+      source: '',
+      days: 60,
+      sourceAudience: ''
+    });
     onOpenChange(false);
   };
 
   const handleSelectAudienceType = (type: AudienceType) => {
     setCurrentView(type);
+  };
+
+  const handleInputChange = (field: keyof AudienceFormData, value: string | number) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleCreateAudience = () => {
+    let newAudience;
+    
+    if (currentView === 'lookalike' && formData.sourceAudience) {
+      // Find the source audience
+      const sourceAudience = audiencesData.find(aud => aud.id === formData.sourceAudience);
+      
+      if (sourceAudience) {
+        newAudience = {
+          id: `aud-${audiencesData.length + 1}`,
+          name: `${sourceAudience.name} - Lookalike`,
+          type: 'Lookalike',
+          source: sourceAudience.source,
+          size: '1000', // Default size for lookalike audiences
+          status: 'Active'
+        };
+      }
+    } else {
+      newAudience = {
+        id: `aud-${audiencesData.length + 1}`,
+        name: formData.name,
+        type: 'Website Visitors',
+        source: formData.source,
+        size: '0',
+        status: 'Active'
+      };
+    }
+
+    if (newAudience) {
+      // Add the new audience to the data using the exported function
+      addNewAudience(newAudience);
+      navigate('/audiences');
+      // Close the dialog and reset form
+      handleClose();
+    }
   };
 
   const renderInitialView = () => (
@@ -103,20 +174,23 @@ const CreateAudienceDialog = ({ open, onOpenChange }: CreateAudienceDialogProps)
       <div className="p-6 space-y-6">
         <div className="space-y-2">
           <label className="font-medium">Source pixel</label>
-          <Select>
+          <Select onValueChange={(value) => handleInputChange('source', value)}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select a pixel" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="pixel-1">Pixel 1</SelectItem>
-              <SelectItem value="pixel-2">Pixel 2</SelectItem>
+              <SelectItem value="Facebook Pixel">Facebook Pixel</SelectItem>
+              <SelectItem value="Google Analytics">Google Analytics</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div className="space-y-2">
           <label className="font-medium">Visited in the last</label>
-          <Select defaultValue="60">
+          <Select 
+            defaultValue="60"
+            onValueChange={(value) => handleInputChange('days', parseInt(value))}
+          >
             <SelectTrigger className="w-full">
               <SelectValue placeholder="60 days" />
             </SelectTrigger>
@@ -131,7 +205,11 @@ const CreateAudienceDialog = ({ open, onOpenChange }: CreateAudienceDialogProps)
 
         <div className="space-y-2">
           <label className="font-medium">Name</label>
-          <Input placeholder="Enter audience name" />
+          <Input 
+            placeholder="Enter audience name" 
+            value={formData.name}
+            onChange={(e) => handleInputChange('name', e.target.value)}
+          />
         </div>
       </div>
 
@@ -139,7 +217,11 @@ const CreateAudienceDialog = ({ open, onOpenChange }: CreateAudienceDialogProps)
         <Button onClick={handleClose} variant="outline">
           Cancel
         </Button>
-        <Button className="bg-[#ff7a59] hover:bg-[#ff7a59]/90 text-white">
+        <Button 
+          className="bg-[#ff7a59] hover:bg-[#ff7a59]/90 text-white"
+          onClick={handleCreateAudience}
+          disabled={!formData.name || !formData.source}
+        >
           Create audience
         </Button>
       </div>
@@ -166,23 +248,31 @@ const CreateAudienceDialog = ({ open, onOpenChange }: CreateAudienceDialogProps)
           <p className="text-sm text-blue-600 mb-2">
             How does lookalike audience syncing work? <span className="underline">Learn more</span>
           </p>
-          <Select>
+          <Select onValueChange={(value) => handleInputChange('sourceAudience', value)}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select an audience" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="audience-1">Website Visitors - Last 30 days</SelectItem>
-              <SelectItem value="audience-2">Previous Customers</SelectItem>
+              {audiencesData.map(audience => (
+                <SelectItem key={audience.id} value={audience.id}>
+                  {audience.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
+
       </div>
 
       <div className="border-t p-4 flex justify-between">
         <Button onClick={handleClose} variant="outline">
           Cancel
         </Button>
-        <Button className="bg-[#ff7a59] hover:bg-[#ff7a59]/90 text-white">
+        <Button 
+          className="bg-[#ff7a59] hover:bg-[#ff7a59]/90 text-white"
+          onClick={handleCreateAudience}
+          disabled={!formData.sourceAudience}
+        >
           Create audience
         </Button>
       </div>
