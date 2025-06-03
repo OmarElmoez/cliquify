@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -13,6 +12,7 @@ import { formatCampaignDate } from '@/utils/dateFormatters';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Loader, RefreshCcw } from 'lucide-react';
 import { toast } from "@/components/ui/sonner";
+import { dummyCampaignsResponse } from '@/data/dummyCampaigns';
 
 const FacebookIcon = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -20,6 +20,8 @@ const FacebookIcon = () => (
     <path d="M16.5 12H13.5V9C13.5 8.4 13.95 9 14.55 9H15V6H13.5C11.7 6 10.5 7.2 10.5 9V12H9V15H10.5V22.5H13.5V15H15.75L16.5 12Z" fill="white"/>
   </svg>
 );
+
+const mode = import.meta.env.VITE_DEV_MODE;
 
 const Campaigns = () => {
   const [isCreateAudienceOpen, setIsCreateAudienceOpen] = useState(false);
@@ -62,9 +64,10 @@ const Campaigns = () => {
 
   useEffect(() => {
     // Fetch campaigns when account is selected or page changes
-    if (selectedAccount) {
-      loadCampaigns(selectedAccount, currentPage);
-    }
+    // if (selectedAccount) {
+    //   loadCampaigns(selectedAccount, currentPage);
+    // }
+    loadCampaigns(selectedAccount, currentPage);
   }, [selectedAccount, currentPage]);
 
   const loadAdAccounts = async () => {
@@ -98,13 +101,27 @@ const Campaigns = () => {
       setLoading(true);
       setError(null);
       setShowRetryAction({ visible: false, type: 'campaigns' });
-      const response = await fetchCampaigns(accountId, "1", page);
-      setCampaigns(response.results);
-      setPagination({
-        next: response.next,
-        previous: response.previous,
-        count: response.count
-      });
+      
+      // Use dummy data in development mode
+      if (mode === 'development') {
+        console.log('Using dummy data');
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 500));
+        setCampaigns(dummyCampaignsResponse.results);
+        setPagination({
+          next: dummyCampaignsResponse.next,
+          previous: dummyCampaignsResponse.previous,
+          count: dummyCampaignsResponse.count
+        });
+      } else {
+        const response = await fetchCampaigns(accountId, "1", page);
+        setCampaigns(response.results);
+        setPagination({
+          next: response.next,
+          previous: response.previous,
+          count: response.count
+        });
+      }
     } catch (error) {
       const errorMessage = 'Failed to load campaigns. Please try again later.';
       setError(errorMessage);
