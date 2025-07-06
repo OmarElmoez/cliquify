@@ -6,13 +6,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import CreateAudienceDialog from '@/components/audience/CreateAudienceDialog';
 import StatusDialog from '@/components/shared/StatusDialog';
-import { fetchAdAccounts, AdAccount } from '@/services/adAccountService';
-import { fetchCampaigns, Campaign, CampaignsResponse, updateCampaignStatus } from '@/services/campaignService';
+import { getAdAccounts, AdAccount } from '@/services/adAccountService';
+import { getCampaigns, Campaign, updateCampaignStatus, CampaignsResponse, CampaignStatus } from '@/services/campaignService';
 import { formatCampaignDate } from '@/utils/dateFormatters';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Loader, RefreshCcw } from 'lucide-react';
 import { toast } from "@/components/ui/sonner";
 import { dummyCampaignsResponse } from '@/data/dummyCampaigns';
+import GoogleSignInButton from '@/components/ui/GoogleSignInButton';
+import MetaSignInButton from '@/components/ui/MetaSignInButton';
 
 const FacebookIcon = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -20,8 +22,6 @@ const FacebookIcon = () => (
     <path d="M16.5 12H13.5V9C13.5 8.4 13.95 9 14.55 9H15V6H13.5C11.7 6 10.5 7.2 10.5 9V12H9V15H10.5V22.5H13.5V15H15.75L16.5 12Z" fill="white"/>
   </svg>
 );
-
-const mode = import.meta.env.VITE_DEV_MODE;
 
 const Campaigns = () => {
   const [isCreateAudienceOpen, setIsCreateAudienceOpen] = useState(false);
@@ -42,86 +42,72 @@ const Campaigns = () => {
     description: '',
     showActionButton: true
   });
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [campaignsData, setCampaignsData] = useState<CampaignsResponse>();
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [pagination, setPagination] = useState<{
-    next: string | null;
-    previous: string | null;
-    count: number;
-  }>({ next: null, previous: null, count: 0 });
+  // const [pagination, setPagination] = useState<{
+  //   next: string | null;
+  //   previous: string | null;
+  //   count: number;
+  // }>({ next: null, previous: null, count: 0 });
   const [showRetryAction, setShowRetryAction] = useState<{
     visible: boolean;
     type: 'accounts' | 'campaigns';
   }>({ visible: false, type: 'accounts' });
   const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [currentCampaignStatus, setCurrentCampaignStatus] = useState("");
   
   const navigate = useNavigate();
 
   // useEffect(() => {
-  //   // Fetch ad accounts when component mounts
-  //   loadAdAccounts();
-  // }, []);
+  //   const token = localStorage.getItem('access_token');
+  //   if(token)
+  // }, [])
 
   useEffect(() => {
-    // Fetch campaigns when account is selected or page changes
-    // if (selectedAccount) {
-    //   loadCampaigns(selectedAccount, currentPage);
-    // }
-    loadCampaigns(selectedAccount, currentPage);
-  }, [selectedAccount, currentPage]);
+    loadAdAccounts();
+  }, []);
 
-  // const loadAdAccounts = async () => {
-  //   try {
-  //     setLoading(true);
-  //     setError(null);
-  //     setShowRetryAction({ visible: false, type: 'accounts' });
-  //     const accounts = await fetchAdAccounts();
-  //     setAdAccounts(accounts);
-  //     if (accounts.length > 0) {
-  //       setSelectedAccount(accounts[0].id);
-  //     }
-  //   } catch (error) {
-  //     const errorMessage = 'Failed to load ad accounts. Please try again later.';
-  //     setError(errorMessage);
-  //     showDialog('error', 'Error', errorMessage, false);
-      
-  //     // Show retry action after 1 second
-  //     setTimeout(() => {
-  //       setShowRetryAction({ visible: true, type: 'accounts' });
-  //     }, 1000);
-      
-  //     console.error('Error fetching ad accounts:', error);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
+  useEffect(() => {
+    // Fetch campaigns when account is selected
+    if (selectedAccount) {
+      loadCampaigns(1);
+    }
+  }, [selectedAccount]);
 
-  const loadCampaigns = async (accountId: string, page: number) => {
+  const loadAdAccounts = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      setShowRetryAction({ visible: false, type: 'accounts' });
+      const accounts = await getAdAccounts();
+      setAdAccounts(accounts.data);
+      if (accounts.data.length > 0) {
+        setSelectedAccount(accounts.data[0].id);
+      }
+    } catch (error) {
+      const errorMessage = 'Failed to load ad accounts. Please try again later.';
+      setError(errorMessage);
+      showDialog('error', 'Error', errorMessage, false);
+      
+      // Show retry action after 1 second
+      setTimeout(() => {
+        setShowRetryAction({ visible: true, type: 'accounts' });
+      }, 1000);
+      
+      console.error('Error fetching ad accounts:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadCampaigns = async (page: number) => {
     try {
       setLoading(true);
       setError(null);
       setShowRetryAction({ visible: false, type: 'campaigns' });
       
-      // Use dummy data in development mode
-      if (mode === 'development') {
-        console.log('Using dummy data');
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-        setCampaigns(dummyCampaignsResponse.results);
-        setPagination({
-          next: dummyCampaignsResponse.next,
-          previous: dummyCampaignsResponse.previous,
-          count: dummyCampaignsResponse.count
-        });
-      } else {
-        const response = await fetchCampaigns(accountId, "1", page);
-        setCampaigns(response.results);
-        setPagination({
-          next: response.next,
-          previous: response.previous,
-          count: response.count
-        });
-      }
+      const response = await getCampaigns({account_id: selectedAccount, page});
+      setCampaignsData(response);
     } catch (error) {
       const errorMessage = 'Failed to load campaigns. Please try again later.';
       setError(errorMessage);
@@ -139,68 +125,62 @@ const Campaigns = () => {
   };
 
   const handleRefreshCampaigns = async () => {
-    if (!selectedAccount || refreshing) return;
-    
-    setRefreshing(true);
     try {
-      const response = await fetchCampaigns(selectedAccount, "1", currentPage);
-      setCampaigns(response.results);
-      setPagination({
-        next: response.next,
-        previous: response.previous,
-        count: response.count
-      });
+      const response = await getCampaigns({account_id: selectedAccount});
+      setCampaignsData(response);
       toast.success("Campaigns refreshed successfully");
     } catch (error) {
       console.error('Error refreshing campaigns:', error);
       toast.error("Failed to refresh campaigns");
-    } finally {
-      setRefreshing(false);
     }
   };
 
-  const handleNextPage = () => {
-    if (pagination.next) {
-      setCurrentPage(currentPage + 1);
-    }
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    loadCampaigns(page);
   };
 
-  const handlePreviousPage = () => {
-    if (pagination.previous && currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
-  };
+  // const handleNextPage = () => {
+  //   if (pagination.next) {
+  //     setCurrentPage(currentPage + 1);
+  //   }
+  // };
+
+  // const handlePreviousPage = () => {
+  //   if (pagination.previous && currentPage > 1) {
+  //     setCurrentPage(currentPage - 1);
+  //   }
+  // };
 
   const handleAccountChange = (accountId: string) => {
     setSelectedAccount(accountId);
     setCurrentPage(1); // Reset to first page when account changes
   };
 
-  // const handleStatusToggle = async (campaignId: string, currentStatus: string) => {
-  //   try {
-  //     setStatusLoading(campaignId);
-  //     const newStatus = currentStatus === "ACTIVE" ? "PAUSED" : "ACTIVE";
-  //     const response = await updateCampaignStatus(campaignId, newStatus);
+  const handleStatusToggle = async (campaignId: string, currentStatus: CampaignStatus) => {
+    try {
+      setStatusLoading(campaignId);
+      const response = await updateCampaignStatus(campaignId, currentStatus);
       
-  //     if (response.data.success) {
-  //       // Refetch campaigns to get the latest data
-  //       loadCampaigns(selectedAccount, currentPage);
+      if (response.new_status.success) {
+        // Refetch campaigns to get the latest data
+        loadCampaigns(currentPage);
         
-  //       showDialog('success', 'Status Updated', response.message, false);
-  //     }
-  //   } catch (error) {
-  //     console.error('Error updating campaign status:', error);
-  //     showDialog('error', 'Status Update Failed', 'Failed to update campaign status. Please try again later.', false);
-  //   } finally {
-  //     setStatusLoading(null);
-  //   }
-  // };
-
-  const handleStatusToggle = (campaignId: string, currentStatus: string) => {
-    setCampaigns(campaigns.map(campaign => 
-      campaign.id === campaignId ? { ...campaign, status: currentStatus === "ACTIVE" ? "PAUSED" : "ACTIVE" } : campaign
-    ));
+        showDialog('success', 'Status Updated', response.message, false);
+      }
+    } catch (error) {
+      console.error('Error updating campaign status:', error);
+      showDialog('error', 'Status Update Failed', 'Failed to update campaign status. Please try again later.', false);
+    } finally {
+      setStatusLoading(null);
+    }
   };
+
+  // const handleStatusToggle = (campaignId: string, currentStatus: string) => {
+  //   setCampaignsData(campaignsData.results.map(campaign => 
+  //     campaign.id === campaignId ? { ...campaign, status: currentStatus === "ACTIVE" ? "PAUSED" : "ACTIVE" } : campaign
+  //   ));
+  // };
 
   const showDialog = (variant: 'error' | 'success', title: string, description: string, showActionButton: boolean) => {
     setDialogState({
@@ -311,11 +291,10 @@ const Campaigns = () => {
             </Button>
           </div>
         )} */}
-
         <div className="border rounded-md overflow-hidden">
           {loading ? (
             <div className="py-8 text-center">Loading campaigns...</div>
-          ) : campaigns.length > 0 ? (
+          ) : campaignsData?.results.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
@@ -327,7 +306,7 @@ const Campaigns = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {campaigns.map(campaign => (
+                {campaignsData?.results.map(campaign => (
                   <TableRow key={campaign.id}>
                     <TableCell className="py-4 px-4">
                       <div className="flex items-center gap-2">
@@ -342,12 +321,20 @@ const Campaigns = () => {
                             <Loader className="h-4 w-4 animate-spin" />
                           </div>
                         ) : (
-                          <Switch 
-                            checked={campaign.status === "ACTIVE"} 
-                            onCheckedChange={() => handleStatusToggle(campaign.id, campaign.status)}
-                          />
+                          <Select 
+                            value={campaign.status} 
+                            onValueChange={(value: CampaignStatus) => handleStatusToggle(campaign.id, value)}
+                          >
+                            <SelectTrigger className="w-24">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="ACTIVE">Active</SelectItem>
+                              <SelectItem value="PAUSED">Paused</SelectItem>
+                              {/* <SelectItem value="ARCHIVED">Archived</SelectItem> */}
+                            </SelectContent>
+                          </Select>
                         )}
-                        <span>{campaign.status}</span>
                       </div>
                     </TableCell>
                     <TableCell className="py-4 px-4">{campaign.buying_type}</TableCell>
@@ -364,13 +351,13 @@ const Campaigns = () => {
           )}
         </div>
 
-        {campaigns.length > 0 && (
+        {campaignsData?.results.length > 0 && (
           <Pagination>
             <PaginationContent>
               <PaginationItem>
                 <PaginationPrevious 
-                  onClick={handlePreviousPage} 
-                  className={!pagination.previous ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  onClick={() => handlePageChange(currentPage - 1)} 
+                  className={!campaignsData.previous ? "pointer-events-none opacity-50" : "cursor-pointer"}
                 >
                   <span className="sr-only">Previous</span>
                 </PaginationPrevious>
@@ -380,8 +367,8 @@ const Campaigns = () => {
               </PaginationItem>
               <PaginationItem>
                 <PaginationNext 
-                  onClick={handleNextPage} 
-                  className={!pagination.next ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  onClick={() => handlePageChange(currentPage + 1)} 
+                  className={!campaignsData.next ? "pointer-events-none opacity-50" : "cursor-pointer"}
                 >
                   <span className="sr-only">Next</span>
                 </PaginationNext>

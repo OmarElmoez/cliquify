@@ -1,7 +1,7 @@
 
 import axiosInstance from '@/lib/axios';
 
-export interface AdAccount {
+export type AdAccount = {
   id: string;
   name: string;
   account_id: string;
@@ -13,12 +13,14 @@ export interface AdAccount {
   owner: string;
 }
 
-export const fetchAdAccounts = async (): Promise<AdAccount[]> => {
+type adAccountResponse = {
+  data: AdAccount[];
+}
+
+export const getAdAccounts = async (): Promise<adAccountResponse> => {
   try {
-    const response = await axiosInstance.post('/meta/data/adaccount/list/', {
-      external_id: "1"
-    });
-    return response.data.data || [];
+    const response = await axiosInstance.get('/adaccounts/list/');
+    return response.data;
   } catch (error) {
     console.error('Error fetching ad accounts:', error);
     throw error;

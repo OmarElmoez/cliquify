@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,7 +8,10 @@ import Campaigns from "./pages/Campaigns";
 import Connections from "./pages/Connections";
 import Audiences from "./pages/Audiences";
 import CreateCampaign from "./pages/CreateCampaign";
+import SignIn from "./pages/SignIn";
 import NotFound from "./pages/NotFound";
+import OAuthCallback from "@/pages/OAuthCallback";
+import MetaCallback from "@/pages/MetaCallback";
 
 const queryClient = new QueryClient();
 
@@ -20,7 +22,8 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={
+          <Route path="/" element={<SignIn />} />
+          <Route path="/dashboard" element={
             <AppLayout>
               <Campaigns />
             </AppLayout>
@@ -37,6 +40,9 @@ const App = () => (
           } />
           <Route path="/campaigns/create" element={<CreateCampaign />} />
           <Route path="/campaigns" element={<Navigate to="/" replace />} />
+          <Route path="/oauth/callback" element={<OAuthCallback />} />
+          <Route path="/meta/callback" element={<MetaCallback />} />
+          <Route path="/campaigns" element={<Navigate to="/dashboard" replace />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

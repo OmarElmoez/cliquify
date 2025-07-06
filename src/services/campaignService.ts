@@ -1,36 +1,45 @@
 
 import axiosInstance from '@/lib/axios';
 
-export interface Campaign {
+export type Campaign = {
   id: string;
   name: string;
   status: string;
   buying_type: string;
-  created_time: string;
   objective: string;
+  created_time: string;
 }
 
-export interface CampaignsResponse {
+export type CampaignsResponse = {
+  results: Campaign[];
   count: number;
   next: string | null;
   previous: string | null;
-  results: Campaign[];
 }
+
+type CampaignsProps = {
+  account_id: string;
+  page?: number;
+}
+
+export type CampaignStatus = "ACTIVE" | "PAUSED" | 'ARCHIVED'
 
 export interface StatusUpdateResponse {
   message: string;
-  data: {
+  new_status: {
     success: boolean;
   };
 }
 
-export const fetchCampaigns = async (
-  accountId: string, 
-  externalId: string = "1", 
-  page: number = 1
-): Promise<CampaignsResponse> => {
+export const getCampaigns = async ({account_id, page = 1}: CampaignsProps): Promise<CampaignsResponse> => {
+  let url = `/campaigns/?account_id=${account_id}`;
+
+  if (page) {
+    url += `&page=${page}`;
+  }
+
   try {
-    const response = await axiosInstance.get(`/meta/data/campaign/list/?account_id=${accountId}&external_id=${externalId}&page=${page}`);
+    const response = await axiosInstance.get<CampaignsResponse>(url);
     return response.data;
   } catch (error) {
     console.error('Error fetching campaigns:', error);
@@ -40,12 +49,11 @@ export const fetchCampaigns = async (
 
 export const updateCampaignStatus = async (
   campaignId: string,
-  status: "ACTIVE" | "PAUSED",
-  externalId: string = "1"
+  status: CampaignStatus,
 ): Promise<StatusUpdateResponse> => {
   try {
     // Changed to use URL parameters instead of request body
-    const response = await axiosInstance.post(`/meta/data/campaign/status-update/?campaign_id=${campaignId}&external_id=${externalId}&status=${status}`);
+    const response = await axiosInstance.post(`/campaigns/status/?campaign_id=${campaignId}&status=${status}`);
     return response.data;
   } catch (error) {
     console.error('Error updating campaign status:', error);

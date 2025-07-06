@@ -3,7 +3,9 @@ import axios from 'axios';
 
 // Create axios instance with base configuration
 const axiosInstance = axios.create({
-  baseURL: 'https://cliquifyapi.otomatika.tech',
+  baseURL: import.meta.env.DEV 
+    ? '/api/v1'  
+    : 'https://cliquifyapi.otomatika.tech/api/v1',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -12,7 +14,12 @@ const axiosInstance = axios.create({
 // Request interceptor
 axiosInstance.interceptors.request.use(
   (config) => {
-    // You can add auth tokens or other logic here
+    const token = localStorage.getItem('access_token')
+    
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
     return config;
   },
   (error) => {

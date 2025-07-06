@@ -43,7 +43,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const navItems = [
     {
       title: "Dashboard",
-      path: "/",
+      path: "/dashboard",
       icon: <LayoutDashboard size={20} />,
     },
     {

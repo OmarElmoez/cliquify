@@ -1,89 +1,153 @@
-
 import React, { useState } from 'react';
 import { ArrowLeft, Calendar, Clock, Info, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from "@/components/ui/button";
 import { AdTypeSelection } from "@/components/campaign/AdTypeSelection";
 import { AdSetup } from "@/components/campaign/AdSetup";
 import { TargetingSetup } from "@/components/campaign/TargetingSetup";
 import { BudgetScheduling } from "@/components/campaign/BudgetScheduling";
-
-export type CampaignData = {
-  adType: string;
-  adAccount: string;
-  page: string;
-  campaignType: 'new' | 'existing';
-  existingCampaign?: string;
-  adCreativeType: 'existing' | 'new';
-  existingPost?: string;
-  url?: string;
-  image?: File | null;
-  body?: string;
-  headline?: string;
-  callToAction?: string;
-  audience: 'new' | 'existing';
-  existingAudience?: string;
-  location?: string;
-  minAge?: number;
-  maxAge?: number;
-  dateRangeStart?: Date;
-  dateRangeEnd?: Date;
-  filters: Array<{type: string, value: string}>;
-  targetingOptions: {
-    demographics: string[];
-    interests: string[];
-    behaviors: string[];
-  };
-  budget: {
-    type: 'daily' | 'lifetime';
-    amount: number;
-  };
-  schedule: {
-    startDate?: Date;
-    startTime?: string;
-  };
-  specialAdCategory?: string;
-};
+import { StepIndicator } from "@/components/campaign/StepIndicator";
+import {
+  campaignDataSchema,
+  type CampaignData,
+} from "@/schemas/campaignSchema";
+import getStepFields from '@/utils/getStepFields';
+import { Form } from "@/components/ui/form"
+import { toast } from 'sonner';
+import createCampaign from '@/services/createCampaign';
 
 const CreateCampaign = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState<'adType' | 'setup'>('adType');
   const [activeTab, setActiveTab] = useState('ad');
-  const [campaign, setCampaign] = useState<CampaignData>({
-    adType: '',
-    adAccount: '',
-    page: '',
-    campaignType: 'new',
-    adCreativeType: 'new',
-    audience: 'new',
-    minAge: 18,
-    maxAge: 65,
-    filters: [],
-    targetingOptions: {
-      demographics: [],
-      interests: [],
-      behaviors: [],
+  const [campaign, setCampaign] = useState<CampaignData>();
+  const [campaignType, setCampaignType] = useState<'new' | 'existing'>('new');
+  const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set());
+
+  const form = useForm<CampaignData>({
+    resolver: zodResolver(campaignDataSchema),
+    mode: 'onChange',
+    defaultValues: {
+      account_id: '',
+      campaign_id: "",
+      page_id: '',
+      post_id: '',
+      image_hash: '',
+      campaign_data: {
+        name: '',
+        status: '',
+        objective: '',
+        buying_type: '',
+        special_ad_categories: [],
+      },
+      adset_data: {
+        name: '',
+        status: '',
+        start_time: '',
+        end_time: '',
+        optimization_goal: '',
+        billing_event: '',
+        bid_amount: '',
+        bid_strategy: '',
+        lifetime_budget: 0,
+        daily_budget: 0,
+        targeting: {
+          age_min: 18,
+          age_max: 65,
+          genders: [1, 2],
+        },
+        geo_locations: {
+          countries: [],
+        },
+      },
+      creative_data: {
+        name: '',
+        object_story_spec: {
+          link_data: {
+            link: '',
+            message: '',
+            description: '',
+            call_to_action: {
+              type: '',
+            },
+          },
+        },
+      },
+      ad_data: {
+        name: '', 
+        status: '',
+      },
     },
-    budget: {
-      type: 'daily',
-      amount: 0,
-    },
-    schedule: {}
   });
 
   const handleExit = () => {
     navigate('/');
   };
 
-  const handleSave = () => {
-    // Save draft logic
-    console.log("Saving campaign:", campaign);
+  const updateCampaignType = (value: "new" | "existing") => {
+    setCampaignType(value);
+  }
+
+  // const handleSave = async () => {
+  //   const isValid = await form.trigger();
+  //   if (isValid) {
+  //     const formData = form.getValues();
+  //     console.log("Saving campaign:", formData);
+  //   }
+  // };
+
+  // Step validation functions
+  const validateCurrentStep = async (): Promise<boolean> => {
+    const stepFields = getStepFields(activeTab);
+    const isValid = await form.trigger(stepFields as any);
+    return isValid;
   };
 
-  const handlePublish = () => {
-    // Publish campaign logic
-    console.log("Publishing campaign:", campaign);
-    navigate('/');
+  const handleNextStep = async () => {
+    const isValid = await validateCurrentStep();
+    if (isValid) {
+      // Mark current step as completed
+      setCompletedSteps(prev => new Set([...prev, activeTab]));
+      if (activeTab === 'ad') setActiveTab('targeting');
+      else if (activeTab === 'targeting') setActiveTab('budget');
+    } else {
+      console.log(`Validation failed for ${activeTab} step`);
+    }
+  };
+
+  // const handleStepClick = (stepId: string) => {
+  //   // Only allow navigation to completed steps or current step
+  //   if (completedSteps.has(stepId) || stepId === activeTab) {
+  //     setActiveTab(stepId);
+  //   }
+  // };
+
+  // Check if current step has errors
+  const getStepErrors = (stepId: string): boolean => {
+    const stepFields = getStepFields(stepId);
+    return stepFields.some(field => {
+      const error = form.formState.errors[field as any];
+      return error !== undefined;
+    });
+  };
+
+  const handlePublish = async () => {
+    console.log("Publishing campaign");
+    const isValid = await validateCurrentStep();
+    if (isValid) {
+      const isFormValid = await form.trigger();
+      if (isFormValid) {
+        const formData = form.getValues();
+        console.log("Publishing campaign:", formData);
+        const response = await createCampaign(formData);
+        console.log("Campaign created:", response);
+        navigate('/');
+      }
+    } else {
+      toast.error('Please fill in all the fields');
+    }
   };
 
   const handleAdTypeSelect = (adType: string) => {
@@ -93,6 +157,9 @@ const CreateCampaign = () => {
 
   const updateCampaign = (data: Partial<CampaignData>) => {
     setCampaign(prev => ({ ...prev, ...data }));
+    // Also update form values
+    form.setValue('campaign_data.name', data.campaign_data?.name || '');
+    // Add more field updates as needed
   };
 
   if (step === 'adType') {
@@ -103,9 +170,9 @@ const CreateCampaign = () => {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Dashboard
           </Button>
-          <h1 className="text-xl font-semibold">Create New Campaign</h1>
+          {/* <h1 className="text-xl font-semibold">Create New Campaign</h1> */}
         </div>
-        
+
         <AdTypeSelection onSelect={handleAdTypeSelect} />
       </div>
     );
@@ -120,37 +187,37 @@ const CreateCampaign = () => {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Exit
           </Button>
-          <Button variant="ghost" size="sm" className="text-white hover:text-white/80" onClick={handleSave}>
+          {/* <Button variant="ghost" size="sm" className="text-white hover:text-white/80" onClick={handleSave}>
             Save
-          </Button>
-          <span className="text-sm">Unsaved changes</span>
+          </Button> */}
+          {/* <span className="text-sm">Unsaved changes</span> */}
         </div>
         <div className="flex items-center gap-2">
           <h1 className="text-sm font-medium">
-            {campaign.adType} - {new Date().toLocaleDateString()} {new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+            {campaign.campaign_data?.name} - {new Date().toLocaleDateString()} {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </h1>
-          <Button variant="ghost" size="sm" className="text-white hover:text-white/80" onClick={handlePublish}>
+          {/* <Button variant="ghost" size="sm" className="text-white hover:text-white/80" onClick={handlePublish}>
             Publish
-          </Button>
+          </Button> */}
         </div>
       </header>
 
       {/* Main Content */}
       <main className="pt-16 min-h-screen">
         <div className="flex border-b">
-          <div 
+          <div
             className={`px-6 py-3 cursor-pointer ${activeTab === 'ad' ? 'border-b-2 border-blue-600' : ''}`}
             onClick={() => setActiveTab('ad')}
           >
             Ad
           </div>
-          <div 
+          <div
             className={`px-6 py-3 cursor-pointer ${activeTab === 'targeting' ? 'border-b-2 border-blue-600' : ''}`}
             onClick={() => setActiveTab('targeting')}
           >
             Targeting
           </div>
-          <div 
+          <div
             className={`px-6 py-3 cursor-pointer ${activeTab === 'budget' ? 'border-b-2 border-blue-600' : ''}`}
             onClick={() => setActiveTab('budget')}
           >
@@ -159,21 +226,72 @@ const CreateCampaign = () => {
         </div>
 
         <div className="container mx-auto px-6 py-8">
-          {activeTab === 'ad' && (
-            <AdSetup campaign={campaign} updateCampaign={updateCampaign} />
-          )}
-          
-          {activeTab === 'targeting' && (
-            <TargetingSetup campaign={campaign} updateCampaign={updateCampaign} />
-          )}
-          
-          {activeTab === 'budget' && (
-            <BudgetScheduling campaign={campaign} updateCampaign={updateCampaign} />
-          )}
-          
-          <div className="flex justify-between mt-8">
-            <Button 
-              variant="outline" 
+          {/* Step Indicator */}
+          <StepIndicator
+            currentStep={activeTab}
+            steps={[
+              {
+                id: 'ad',
+                label: 'Ad Setup',
+                isCompleted: completedSteps.has('ad'),
+                hasErrors: getStepErrors('ad'),
+              },
+              {
+                id: 'targeting',
+                label: 'Targeting',
+                isCompleted: completedSteps.has('targeting'),
+                hasErrors: getStepErrors('targeting'),
+              },
+              {
+                id: 'budget',
+                label: 'Budget & Schedule',
+                isCompleted: completedSteps.has('budget'),
+                hasErrors: getStepErrors('budget'),
+              },
+            ]}
+            onStepClick={() => { }}
+          />
+
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handlePublish)}>
+              {activeTab === 'ad' && (
+                <AdSetup
+                  campaign={campaign}
+                  updateCampaign={updateCampaign}
+                  control={form.control}
+                  setValue={form.setValue}
+                  handleNextStep={handleNextStep}
+                  campaignType={campaignType}
+                  updateCampaignType={updateCampaignType}
+                />
+
+              )}
+
+              {activeTab === 'targeting' && (
+                <TargetingSetup
+                  campaign={campaign}
+                  updateCampaign={updateCampaign}
+                  control={form.control}
+                  handleNextStep={handleNextStep}
+                  selectedObjective={campaign.campaign_data?.objective}
+                  campaignType={campaignType}
+                />
+              )}
+
+              {activeTab === 'budget' && (
+                <BudgetScheduling
+                  campaign={campaign}
+                  updateCampaign={updateCampaign}
+                  control={form.control}
+                  setValue={form.setValue}
+                  handlePublish={handlePublish}
+                />
+              )}
+
+
+              <div className="flex justify-end mt-8">
+                {/* <Button
+              variant="outline"
               onClick={() => {
                 if (activeTab === 'ad') setStep('adType');
                 else if (activeTab === 'targeting') setActiveTab('ad');
@@ -181,19 +299,25 @@ const CreateCampaign = () => {
               }}
             >
               Back
-            </Button>
-            
-            <Button 
-              onClick={() => {
-                if (activeTab === 'ad') setActiveTab('targeting');
-                else if (activeTab === 'targeting') setActiveTab('budget');
-                else if (activeTab === 'budget') handlePublish();
-              }}
-            >
-              {activeTab === 'budget' ? 'Publish' : 'Next'} 
-              <ChevronRight className="ml-2 h-4 w-4" />
-            </Button>
-          </div>
+            </Button> */}
+
+                {/* {activeTab === 'budget' ? <Button
+                  type="submit"
+                  disabled={form.formState.isSubmitting}
+                >
+                  Publish
+                  <ChevronRight className="ml-2 h-4 w-4" />
+                </Button> : <Button
+                  type="button"
+                  onClick={handleNextStep}
+                  disabled={form.formState.isSubmitting}
+                >
+                  Next
+                  <ChevronRight className="ml-2 h-4 w-4" />
+                </Button>} */}
+              </div>
+            </form>
+          </Form>
         </div>
       </main>
     </div>

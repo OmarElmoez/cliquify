@@ -1,5 +1,4 @@
-
-import React from 'react';
+import { useEffect, useState } from 'react';
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -7,23 +6,65 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
-import { CampaignData } from "@/pages/CreateCampaign";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Calendar as CalendarIcon, Clock, Info } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronRight, Info } from 'lucide-react';
+import { CampaignData } from '@/schemas/campaignSchema';
+import { Control, UseFormSetValue } from 'react-hook-form';
+import {
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 
 interface BudgetSchedulingProps {
   campaign: CampaignData;
   updateCampaign: (data: Partial<CampaignData>) => void;
+  control: Control<CampaignData>;
+  setValue: UseFormSetValue<CampaignData>;
+  handlePublish: () => void;
 }
 
-export const BudgetScheduling = ({ campaign, updateCampaign }: BudgetSchedulingProps) => {
+export const BudgetScheduling = ({
+  campaign,
+  updateCampaign,
+  control,
+  setValue,
+  handlePublish
+}: BudgetSchedulingProps) => {
+
+  const [budgetType, setBudgetType] = useState<'daily' | 'lifetime'>();
+  const [startData, setStartData] = useState({
+    date: "",
+    time: ""
+  });
+  const [endData, setEndData] = useState({
+    date: "",
+    time: ""
+  });
+
+  useEffect(() => {
+    updateCampaign({
+      adset_data: { ...campaign.adset_data, start_time: `${startData.date}, ${startData.time}` }
+    });
+  }, [startData.date, startData.time])
+
+  useEffect(() => {
+    updateCampaign({
+      adset_data: { ...campaign.adset_data, end_time: `${endData.date}, ${endData.time}` }
+    });
+  }, [endData.date, endData.time])
+
   return (
     <div className="max-w-2xl space-y-8">
       <div className="space-y-4">
         <h2 className="text-xl font-semibold">Budget & Schedule</h2>
-        
+
         <div className="space-y-4">
-          <div>
+          {/* Budget Type and Amount */}
+          <div className="space-y-2">
             <div className="flex items-center gap-2">
               <Label>Budget</Label>
               <TooltipProvider>
@@ -38,11 +79,11 @@ export const BudgetScheduling = ({ campaign, updateCampaign }: BudgetSchedulingP
               </TooltipProvider>
             </div>
             <div className="flex gap-4 mt-2">
-              <Select 
-                value={campaign.budget.type}
-                onValueChange={(value: 'daily' | 'lifetime') => updateCampaign({ 
-                  budget: { ...campaign.budget, type: value } 
-                })}
+              <Select
+                onValueChange={(value: 'daily' | 'lifetime') => {
+                  setBudgetType(value);
+                }}
+                defaultValue={budgetType}
               >
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Budget type" />
@@ -52,72 +93,169 @@ export const BudgetScheduling = ({ campaign, updateCampaign }: BudgetSchedulingP
                   <SelectItem value="lifetime">Lifetime (USD)</SelectItem>
                 </SelectContent>
               </Select>
-              
-              <Input 
-                type="number" 
-                placeholder="0.00" 
-                className="w-[180px]" 
-                value={campaign.budget.amount || ''} 
-                onChange={(e) => updateCampaign({ 
-                  budget: { ...campaign.budget, amount: parseFloat(e.target.value) || 0 } 
-                })}
-              />
+
+              {budgetType && (
+                <FormField
+                  control={control}
+                  name={budgetType === 'lifetime' ? 'adset_data.lifetime_budget' : 'adset_data.daily_budget'}
+                  render={({ field }) => (
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="0.00"
+                        className="w-[180px]"
+                        {...field}
+                        onChange={(e) => {
+                          const value = parseFloat(e.target.value) || 0;
+                          field.onChange(value);
+                          // Update both daily and lifetime budget based on selected type
+                          if (budgetType === 'lifetime') {
+                            updateCampaign({
+                              adset_data: {
+                                ...campaign.adset_data,
+                                lifetime_budget: value,
+                                daily_budget: undefined
+                              }
+                            });
+                          } else {
+                            updateCampaign({
+                              adset_data: {
+                                ...campaign.adset_data,
+                                daily_budget: value,
+                                lifetime_budget: undefined
+                              }
+                            });
+                          }
+                        }}
+                      />
+                    </FormControl>
+                  )}
+                />
+              )}
             </div>
           </div>
 
-          <div className="space-y-2 pt-4">
-            <Label>Schedule</Label>
-            <div className="flex gap-4 mt-2">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    className="w-[240px] justify-start text-left font-normal"
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {campaign.schedule.startDate ? (
-                      format(campaign.schedule.startDate, "PPP")
-                    ) : (
-                      <span>Pick a start date</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={campaign.schedule.startDate}
-                    onSelect={(date) => updateCampaign({ 
-                      schedule: { ...campaign.schedule, startDate: date } 
-                    })}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
+          {/* Start Date & Time */}
+          <FormField
+            control={control}
+            name="adset_data.start_time"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Schedule Start Date & Time</FormLabel>
+                <div className="flex gap-4 mt-2">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="w-[240px] justify-start text-left font-normal"
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        <span>{startData.date ? format(new Date(startData.date), "PPP") : "Pick a start date"}</span>
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={startData.date ? new Date(startData.date) : undefined}
+                        onSelect={(date) => {
+                          setStartData(prev => ({
+                            ...prev,
+                            date: format(date, "yyyy-MM-dd")
+                          }))
+                        }}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
 
-              <Select 
-                value={campaign.schedule.startTime}
-                onValueChange={(value) => updateCampaign({ 
-                  schedule: { ...campaign.schedule, startTime: value } 
-                })}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select time">
-                    <div className="flex items-center">
-                      <Clock className="mr-2 h-4 w-4" />
-                      <span>{campaign.schedule.startTime || "Select time"}</span>
-                    </div>
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="09:00">09:00 AM</SelectItem>
-                  <SelectItem value="12:00">12:00 PM</SelectItem>
-                  <SelectItem value="15:00">03:00 PM</SelectItem>
-                  <SelectItem value="18:00">06:00 PM</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+                  <FormControl>
+                    <Input
+                      type="time"
+                      className="w-[180px]"
+                      value={startData.time || "00:00"}
+                      onChange={(e) => {
+                        setStartData(prev => ({
+                          ...prev,
+                          time: e.target.value
+                        }))
+                      }}
+                    />
+                  </FormControl>
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* End Date & Time (only for lifetime budget) */}
+          {budgetType === 'lifetime' && (
+            <FormField
+              control={control}
+              name="adset_data.end_time"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Schedule End Date & Time</FormLabel>
+                  <div className="flex gap-4 mt-2">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-[240px] justify-start text-left font-normal"
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          <span>{endData.date ? format(new Date(endData.date), "PPP") : "Pick an end date"}</span>
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={endData.date ? new Date(endData.date) : undefined}
+                          onSelect={(date) => {
+                            setEndData(prev => ({
+                              ...prev,
+                              date: format(date, "yyyy-MM-dd")
+                            }))
+                          }}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+
+                    <FormControl>
+                      <Input
+                        type="time"
+                        className="w-[180px]"
+                        value={endData.time || "00:00"}
+                        onChange={(e) => {
+                          setEndData(prev => ({
+                            ...prev,
+                            time: e.target.value
+                          }))
+                        }}
+                      />
+                    </FormControl>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
         </div>
+        <div className="flex justify-end mt-8">
+        <Button
+          type="submit"
+          onClick={() => {
+            setValue('adset_data.start_time', `${startData.date}, ${startData.time}`);
+            setValue('adset_data.end_time', `${endData.date}, ${endData.time}`);
+            handlePublish();
+            console.log("startData", startData);
+
+          }}
+        >
+          Publish
+          <ChevronRight className="ml-2 h-4 w-4" />
+        </Button>
+      </div>
       </div>
     </div>
   );

@@ -1,108 +1,222 @@
-
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { Upload } from 'lucide-react';
-import { CampaignData } from "@/pages/CreateCampaign";
-
-// Mock data - replace with actual API data in production
-const adAccounts = [
-  { id: 'acc1', name: 'Business Account 1' },
-  { id: 'acc2', name: 'Business Account 2' },
-];
-
-const pages = [
-  { id: 'page1', name: 'Business Page 1' },
-  { id: 'page2', name: 'Business Page 2' },
-];
-
-const campaigns = [
-  { id: 'camp1', name: 'Summer Campaign 2025' },
-  { id: 'camp2', name: 'Product Launch Campaign' },
-];
+import { MultiSelect } from "@/components/ui/multi-select";
+import { ChevronRight, Upload } from 'lucide-react';
+import { AdAccount, getAdAccounts } from '@/services/adAccountService';
+import { getPages, Page } from '@/services/pages';
+import { toast } from 'sonner';
+import { Campaign, getCampaigns } from '@/services/campaignService';
+import callToActions from '@/data/callToActions';
+import { CampaignData } from '@/schemas/campaignSchema';
+import { Control, FieldErrors, UseFormSetValue } from 'react-hook-form';
+import {
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Button } from '../ui/button';
+import OBJECTIVES from '@/data/objectives';
+import getImageHashKey from '@/services/getImageHashKey';
+import getCreativeAds, { CreativeAd } from '@/services/creativeAds';
 
 const posts = [
   { id: 'post1', name: 'Product Announcement Post' },
   { id: 'post2', name: 'Summer Sale Post' },
 ];
 
-const callToActions = [
-  'Learn More',
-  'Sign Up',
-  'Shop Now',
-  'Book Now',
-  'Contact Us',
-  'Download',
-  'Apply Now',
-  'Get Quote',
-  'Subscribe',
-];
-
 interface AdSetupProps {
   campaign: CampaignData;
   updateCampaign: (data: Partial<CampaignData>) => void;
+  control: Control<CampaignData>;
+  setValue: UseFormSetValue<CampaignData>;
+  handleNextStep: () => void;
+  campaignType: string;
+  updateCampaignType: (value: string) => void
 }
 
-export const AdSetup = ({ campaign, updateCampaign }: AdSetupProps) => {
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, campaignType, updateCampaignType }: AdSetupProps) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      updateCampaign({ image: e.target.files[0] });
+      const res = await getImageHashKey(e.target.files[0])
+      updateCampaign({ image_hash: res.image_hash.hash });
     }
   };
 
+  const [adAccounts, setAdAccounts] = useState<AdAccount[]>([]);
+  const [pages, setPages] = useState<Page[]>([]);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  // const [campaignType, setCampaignType] = useState<'new' | 'existing'>('new');
+  const [adCreativeType, setAdCreativeType] = useState<'existing' | 'new'>('new');
+  const [selectedAdAccount, setSelectedAdAccount] = useState<string>('');
+  const [creativeAds, setCreativeAds] = useState<CreativeAd[]>([])
+
+  useEffect(() => {
+    const fetchAdAccounts = async () => {
+      try {
+        const response = await getAdAccounts();
+        setAdAccounts(response.data);
+      } catch (error) {
+        console.error('Error fetching ad accounts:', error);
+        toast.error('Error fetching ad accounts');
+      }
+    };
+
+    fetchAdAccounts();
+  }, []);
+
+  useEffect(() => {
+
+    const fetchPages = async () => {
+      try {
+        const response = await getPages();
+        setPages(response.pages);
+      } catch (error) {
+        console.error('Error fetching pages:', error);
+        toast.error('Error fetching pages');
+      }
+    };
+
+    const fetchCampaigns = async () => {
+      try {
+        const response = await getCampaigns({ account_id: selectedAdAccount });
+        setCampaigns(response.results);
+      } catch (error) {
+        console.error('Error fetching campaigns:', error);
+        toast.error('Error fetching campaigns');
+      }
+    };
+
+    const fetchcreativeAds = async () => {
+      try {
+        const res = await getCreativeAds({ account_id: selectedAdAccount });
+        setCreativeAds(res.response);
+      } catch (error) {
+        console.error('Error fetching creative ads:', error);
+        toast.error('Error fetching creative ads');
+      }
+    };
+
+    if (selectedAdAccount) {
+      fetchPages();
+      fetchCampaigns();
+      fetchcreativeAds(); 
+    }
+  }, [selectedAdAccount]);
+
   return (
     <div className="max-w-3xl space-y-8">
+      {/* Ad Name */}
+      <FormField
+        control={control}
+        name="ad_data.name"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Ad Name</FormLabel>
+            <FormControl>
+              <Input
+                placeholder="Enter ad name"
+                {...field}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      {/* Ad Status */}
+      <FormField
+        control={control}
+        name="ad_data.status"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Ad Status</FormLabel>
+            <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select ad status" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                <SelectItem value="PAUSED">PAUSED</SelectItem>
+                <SelectItem value="ACTIVE">ACTIVE</SelectItem>
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
       <div className="space-y-4">
         <h2 className="text-xl font-semibold">Ad Setup</h2>
-        
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="adAccount">Select Ad Account</Label>
-            <Select 
-              value={campaign.adAccount} 
-              onValueChange={(value) => updateCampaign({ adAccount: value })}
-            >
-              <SelectTrigger id="adAccount" className="w-full">
-                <SelectValue placeholder="Select Ad Account" />
-              </SelectTrigger>
-              <SelectContent>
-                {adAccounts.map(account => (
-                  <SelectItem key={account.id} value={account.id}>
-                    {account.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
 
-          <div>
-            <Label htmlFor="page">Select Page</Label>
-            <Select 
-              value={campaign.page} 
-              onValueChange={(value) => updateCampaign({ page: value })}
-            >
-              <SelectTrigger id="page" className="w-full">
-                <SelectValue placeholder="Select Page" />
-              </SelectTrigger>
-              <SelectContent>
-                {pages.map(page => (
-                  <SelectItem key={page.id} value={page.id}>
-                    {page.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        <div className="space-y-4">
+          {/* Ad Account Selection */}
+          <FormField
+            control={control}
+            name="account_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Select Ad Account</FormLabel>
+                <Select onValueChange={(value) => {
+                  field.onChange(value);
+                  setSelectedAdAccount(value);
+                }} value={selectedAdAccount}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Ad Account" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {adAccounts.map(account => (
+                      <SelectItem key={account.id} value={account.id}>
+                        {account.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Page Selection */}
+          <FormField
+            control={control}
+            name="page_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Select Page</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Page" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {pages.map(page => (
+                      <SelectItem key={page.id} value={page.id}>
+                        {page.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           <div className="space-y-2">
             <Label>Campaign</Label>
-            <RadioGroup 
-              value={campaign.campaignType}
-              onValueChange={(value: 'new' | 'existing') => updateCampaign({ campaignType: value })}
+            <RadioGroup
+              value={campaignType}
+              onValueChange={(value: 'new' | 'existing') => updateCampaignType(value)}
               className="flex flex-col space-y-2"
             >
               <div className="flex items-center space-x-2">
@@ -115,23 +229,157 @@ export const AdSetup = ({ campaign, updateCampaign }: AdSetupProps) => {
               </div>
             </RadioGroup>
 
-            {campaign.campaignType === 'existing' && (
+            {campaignType === 'new' && (
+              <div className="mt-2 pl-6 space-y-4">
+                {/* Campaign Name */}
+                <FormField
+                  control={control}
+                  name="campaign_data.name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Campaign Name</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Enter campaign name"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Objective */}
+                <FormField
+                  control={control}
+                  name="campaign_data.objective"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Objective</FormLabel>
+                      <Select onValueChange={(value) => {
+                        field.onChange(value);
+                        updateCampaign({campaign_data: {...campaign.campaign_data, objective: value}})
+                        // updateObjectiveValue(value)
+                      }} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select objective" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                        {OBJECTIVES.map(objective => (
+                            <SelectItem key={objective.title} value={objective.title}>
+                              {objective.title}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Status */}
+                <FormField
+                  control={control}
+                  name="campaign_data.status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Status</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="PAUSED">PAUSED</SelectItem>
+                          <SelectItem value="ACTIVE">ACTIVE</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Buying Type */}
+                <FormField
+                  control={control}
+                  name="campaign_data.buying_type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Buying Type</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select buying type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="AUCTION">AUCTION</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Special Ad Categories */}
+                <FormField
+                  control={control}
+                  name="campaign_data.special_ad_categories"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Special Ad Categories</FormLabel>
+                      <FormControl>
+                        <MultiSelect
+                          placeholder="Select categories..."
+                          options={[
+                            { value: 'NONE', label: 'NONE' },
+                            { value: 'CREDIT', label: 'CREDIT' },
+                            { value: 'EMPLOYMENT', label: 'EMPLOYMENT' },
+                            { value: 'HOUSING', label: 'HOUSING' },
+                            { value: 'ISSUES_ELECTIONS_POLITICS', label: 'ISSUES_ELECTIONS_POLITICS' }
+                          ]}
+                          value={field.value || []}
+                          onChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            )}
+
+            {campaignType === 'existing' && (
               <div className="mt-2 pl-6">
-                <Select 
-                  value={campaign.existingCampaign} 
-                  onValueChange={(value) => updateCampaign({ existingCampaign: value })}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select existing campaign" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {campaigns.map(camp => (
-                      <SelectItem key={camp.id} value={camp.id}>
-                        {camp.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <FormField
+                  control={control}
+                  name="campaign_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <Select onValueChange={(value) => {
+                          field.onChange(value);
+                          updateCampaign({campaign_id: value})
+                      }} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select existing campaign" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {campaigns.map(camp => (
+                            <SelectItem key={camp.id} value={camp.id}>
+                              {camp.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
             )}
           </div>
@@ -140,54 +388,90 @@ export const AdSetup = ({ campaign, updateCampaign }: AdSetupProps) => {
 
       <div className="space-y-4 pt-4 border-t">
         <h3 className="text-lg font-semibold">Ad Creative</h3>
-        
+
         <div className="space-y-2">
-          <RadioGroup 
-            value={campaign.adCreativeType}
-            onValueChange={(value: 'existing' | 'new') => updateCampaign({ adCreativeType: value })}
+          <RadioGroup
+            value={adCreativeType}
+            onValueChange={(value: 'existing' | 'new') => setAdCreativeType(value)}
             className="flex flex-col space-y-2"
           >
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="existing" id="existing-post" />
-              <Label htmlFor="existing-post">Select existing post</Label>
-            </div>
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="new" id="create-new" />
               <Label htmlFor="create-new">Create new ad</Label>
             </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="existing" id="existing-post" />
+              <Label htmlFor="existing-post">Select existing post</Label>
+            </div>
           </RadioGroup>
 
-          {campaign.adCreativeType === 'existing' ? (
+          {adCreativeType === 'existing' && (
             <div className="mt-4 pl-6">
-              <Label htmlFor="existing-post-select">Select Post</Label>
-              <Select 
-                value={campaign.existingPost} 
-                onValueChange={(value) => updateCampaign({ existingPost: value })}
-              >
-                <SelectTrigger id="existing-post-select" className="w-full">
-                  <SelectValue placeholder="Select existing post" />
-                </SelectTrigger>
-                <SelectContent>
-                  {posts.map(post => (
-                    <SelectItem key={post.id} value={post.id}>
-                      {post.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <FormField
+                control={control}
+                name="post_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select existing post" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {creativeAds?.map(post => (
+                          <SelectItem key={post.id} value={post.id}>
+                            {post.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
-          ) : (
+          )}
+
+          {adCreativeType === 'new' && (
             <div className="mt-4 pl-6 space-y-4">
-              <div>
-                <Label htmlFor="url">URL</Label>
-                <Input 
-                  id="url" 
-                  placeholder="https://example.com" 
-                  value={campaign.url || ''} 
-                  onChange={(e) => updateCampaign({ url: e.target.value })}
-                />
-              </div>
-              
+              {/* Creative Name */}
+              <FormField
+                control={control}
+                name="creative_data.name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Name</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Enter ad name"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* URL */}
+              <FormField
+                control={control}
+                name="creative_data.object_story_spec.link_data.link"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>URL</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="https://example.com"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Image Upload */}
               <div>
                 <Label>Upload Image</Label>
                 <div className="mt-2 flex items-center justify-center w-full">
@@ -199,64 +483,96 @@ export const AdSetup = ({ campaign, updateCampaign }: AdSetupProps) => {
                       </p>
                       <p className="text-xs text-gray-500">PNG, JPG (MAX. 800x800px)</p>
                     </div>
-                    <input 
-                      id="dropzone-file" 
-                      type="file" 
-                      className="hidden" 
-                      accept="image/*" 
+                    <input
+                      id="dropzone-file"
+                      type="file"
+                      className="hidden"
+                      accept="image/*"
                       onChange={handleImageUpload}
                     />
                   </label>
                 </div>
-                {campaign.image && (
+                {campaign.image_hash && (
                   <p className="mt-2 text-sm text-gray-500">
-                    Selected file: {campaign.image.name}
+                    Selected file: {campaign.image_hash}
                   </p>
                 )}
               </div>
-              
-              <div>
-                <Label htmlFor="body">Ad Text</Label>
-                <Textarea 
-                  id="body" 
-                  placeholder="Enter the main text for your ad" 
-                  value={campaign.body || ''} 
-                  onChange={(e) => updateCampaign({ body: e.target.value })}
-                  className="h-24"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="headline">Headline</Label>
-                <Input 
-                  id="headline" 
-                  placeholder="Enter a catchy headline" 
-                  value={campaign.headline || ''} 
-                  onChange={(e) => updateCampaign({ headline: e.target.value })}
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="cta">Call to Action</Label>
-                <Select 
-                  value={campaign.callToAction} 
-                  onValueChange={(value) => updateCampaign({ callToAction: value })}
-                >
-                  <SelectTrigger id="cta" className="w-full">
-                    <SelectValue placeholder="Select call to action" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {callToActions.map(cta => (
-                      <SelectItem key={cta} value={cta}>
-                        {cta}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+
+              {/* Message */}
+              <FormField
+                control={control}
+                name="creative_data.object_story_spec.link_data.message"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Message</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Enter the main text for your ad"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Description */}
+              <FormField
+                control={control}
+                name="creative_data.object_story_spec.link_data.description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Enter a description"
+                        className="h-24"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Call to Action */}
+              <FormField
+                control={control}
+                name="creative_data.object_story_spec.link_data.call_to_action.type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Call to Action</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select call to action" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {callToActions.map(cta => (
+                          <SelectItem key={cta} value={cta}>
+                            {cta}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
           )}
         </div>
+      </div>
+      <div className="flex justify-end mt-8">
+        <Button
+          type="button"
+          onClick={handleNextStep}
+        >
+          Next
+          <ChevronRight className="ml-2 h-4 w-4" />
+        </Button>
       </div>
     </div>
   );
