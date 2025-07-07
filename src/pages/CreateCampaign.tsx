@@ -33,7 +33,7 @@ const CreateCampaign = () => {
       account_id: '',
       campaign_id: "",
       page_id: '',
-      post_id: '',
+      creative_id: '',
       image_hash: '',
       campaign_data: {
         name: '',

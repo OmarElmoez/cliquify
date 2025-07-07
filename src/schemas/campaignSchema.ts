@@ -4,6 +4,8 @@ export const campaignDataSchema = z.object({
   account_id: z.string().min(1, "Account ID is required"),
   page_id: z.string().min(1, "Page ID is required"),
   campaign_id: z.string().optional(),
+  creative_id: z.string().optional(),
+  adset_id: z.string().optional(),
   image_hash: z.string().optional(),
   campaign_data: z.object({
     name: z.string().max(100, "Campaign name must be less than 100 characters").optional(),
@@ -32,8 +34,6 @@ export const campaignDataSchema = z.object({
       countries: z.array(z.string()).optional(),
     }),
   }),
-  post_id: z.string().optional(),
-  adset_id: z.string().optional(),
   creative_data: z.object({
     name: z.string().max(100, "Creative name must be less than 100 characters").optional(),
     object_story_spec: z.object({

@@ -247,9 +247,6 @@ export const BudgetScheduling = ({
           onClick={() => {
             setValue('adset_data.start_time', `${startData.date}, ${startData.time}`);
             setValue('adset_data.end_time', `${endData.date}, ${endData.time}`);
-            handlePublish();
-            console.log("startData", startData);
-
           }}
         >
           Publish

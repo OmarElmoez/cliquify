@@ -409,7 +409,7 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
             <div className="mt-4 pl-6">
               <FormField
                 control={control}
-                name="post_id"
+                name="creative_id"
                 render={({ field }) => (
                   <FormItem>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
