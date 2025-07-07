@@ -24,15 +24,13 @@ interface BudgetSchedulingProps {
   updateCampaign: (data: Partial<CampaignData>) => void;
   control: Control<CampaignData>;
   setValue: UseFormSetValue<CampaignData>;
-  handlePublish: () => void;
 }
 
 export const BudgetScheduling = ({
   campaign,
   updateCampaign,
   control,
-  setValue,
-  handlePublish
+  setValue
 }: BudgetSchedulingProps) => {
 
   const [budgetType, setBudgetType] = useState<'daily' | 'lifetime'>();

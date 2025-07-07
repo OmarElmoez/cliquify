@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 
 interface StepIndicatorProps {
   currentStep: string;
+  isShow?: boolean;
   steps: Array<{
     id: string;
     label: string;
@@ -17,6 +18,7 @@ export const StepIndicator: React.FC<StepIndicatorProps> = ({
   currentStep,
   steps,
   onStepClick,
+  isShow
 }) => {
   return (
     <div className="flex items-center justify-center mb-8">

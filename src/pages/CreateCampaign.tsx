@@ -24,6 +24,7 @@ const CreateCampaign = () => {
   const [activeTab, setActiveTab] = useState('ad');
   const [campaign, setCampaign] = useState<CampaignData>();
   const [campaignType, setCampaignType] = useState<'new' | 'existing'>('new');
+  const [adsetType, setAdsetType] = useState<'new' | 'existing'>('new');
   const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set());
 
   const form = useForm<CampaignData>({
@@ -76,7 +77,7 @@ const CreateCampaign = () => {
         },
       },
       ad_data: {
-        name: '', 
+        name: '',
         status: '',
       },
     },
@@ -88,6 +89,10 @@ const CreateCampaign = () => {
 
   const updateCampaignType = (value: "new" | "existing") => {
     setCampaignType(value);
+  }
+
+  const updateAdsetType = (value: "new" | "existing") => {
+    setAdsetType(value);
   }
 
   // const handleSave = async () => {
@@ -133,18 +138,37 @@ const CreateCampaign = () => {
     });
   };
 
-  const handlePublish = async () => {
+  const handlePublish = async (data: CampaignData) => {
     console.log("Publishing campaign");
     const isValid = await validateCurrentStep();
     if (isValid) {
-      const isFormValid = await form.trigger();
-      if (isFormValid) {
-        const formData = form.getValues();
-        console.log("Publishing campaign:", formData);
-        const response = await createCampaign(formData);
-        console.log("Campaign created:", response);
-        navigate('/');
+      // Create a copy of the data
+      const payload = { ...data };
+
+      // Campaign logic: if one exists, remove the other
+      if (data.campaign_id) {
+        delete payload.campaign_data;
+      } else if (data.campaign_data && Object.keys(data.campaign_data).length > 0) {
+        delete payload.campaign_id;
       }
+
+      // Adset logic: if one exists, remove the other
+      if (data.adset_id) {
+        delete payload.adset_data;
+      } else if (data.adset_data && Object.keys(data.adset_data).length > 0) {
+        delete payload.adset_id;
+      }
+
+      // Creative logic: if one exists, remove the other
+      if (data.creative_id) {
+        delete payload.creative_data;
+      } else if (data.creative_data && Object.keys(data.creative_data).length > 0) {
+        delete payload.creative_id;
+      }
+
+      const response = await createCampaign(payload);
+      console.log("Campaign created:", response);
+      navigate('/');
     } else {
       toast.error('Please fill in all the fields');
     }
@@ -204,7 +228,7 @@ const CreateCampaign = () => {
 
       {/* Main Content */}
       <main className="pt-16 min-h-screen">
-        <div className="flex border-b">
+        {/* <div className="flex border-b">
           <div
             className={`px-6 py-3 cursor-pointer ${activeTab === 'ad' ? 'border-b-2 border-blue-600' : ''}`}
             onClick={() => setActiveTab('ad')}
@@ -223,7 +247,7 @@ const CreateCampaign = () => {
           >
             Budget & Schedule
           </div>
-        </div>
+        </div> */}
 
         <div className="container mx-auto px-6 py-8">
           {/* Step Indicator */}
@@ -232,19 +256,19 @@ const CreateCampaign = () => {
             steps={[
               {
                 id: 'ad',
-                label: 'Ad Setup',
+                label: 'Step 1',
                 isCompleted: completedSteps.has('ad'),
                 hasErrors: getStepErrors('ad'),
               },
               {
                 id: 'targeting',
-                label: 'Targeting',
+                label: 'Step 2',
                 isCompleted: completedSteps.has('targeting'),
                 hasErrors: getStepErrors('targeting'),
               },
               {
                 id: 'budget',
-                label: 'Budget & Schedule',
+                label: 'Step 3',
                 isCompleted: completedSteps.has('budget'),
                 hasErrors: getStepErrors('budget'),
               },
@@ -275,16 +299,25 @@ const CreateCampaign = () => {
                   handleNextStep={handleNextStep}
                   selectedObjective={campaign.campaign_data?.objective}
                   campaignType={campaignType}
+                  updateAdsetType={updateAdsetType}
+                  adsetType={adsetType}
                 />
               )}
 
-              {activeTab === 'budget' && (
+              {activeTab === 'budget' && adsetType === 'existing' ? 
+              (<Button
+                type="submit"
+              >
+                Publish
+                <ChevronRight className="ml-2 h-4 w-4" />
+              </Button>) 
+              : (activeTab === 'budget' && adsetType !== 'existing') &&
+              (
                 <BudgetScheduling
                   campaign={campaign}
                   updateCampaign={updateCampaign}
                   control={form.control}
                   setValue={form.setValue}
-                  handlePublish={handlePublish}
                 />
               )}
 

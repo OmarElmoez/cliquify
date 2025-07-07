@@ -27,6 +27,8 @@ interface TargetingSetupProps {
   handleNextStep: () => void;
   selectedObjective: string;
   campaignType: string;
+  updateAdsetType: (value: 'new' | 'existing') => void;
+  adsetType: string;
 }
 
 // Age options for dropdowns
@@ -38,12 +40,14 @@ export const TargetingSetup: React.FC<TargetingSetupProps> = ({
   control,
   handleNextStep,
   selectedObjective,
-  campaignType
+  campaignType,
+  updateAdsetType,
+  adsetType
 }) => {
 
   const [adsets, setAdsets] = useState<Adset[]>([]);
   const [bidValue, setBidValue] = useState('');
-  const [adsetType, setAdsetType] = useState<'new' | 'existing'>('new');
+  // const [adsetType, setAdsetType] = useState<'new' | 'existing'>('new');
   const [selectedOptimizationGoal, setSelectedOptimizationGoal] = useState('')
 
   const relattedOptimizationGoals = selectedObjective && OBJECTIVES.filter(objective => objective.title === selectedObjective)[0]?.optimizationGoals || []
@@ -69,7 +73,7 @@ export const TargetingSetup: React.FC<TargetingSetupProps> = ({
         <div className="space-y-6 bg-white p-6 rounded-md border">
           <RadioGroup
             value={adsetType}
-            onValueChange={(value: 'new' | 'existing') => setAdsetType(value)}
+            onValueChange={(value: 'new' | 'existing') => updateAdsetType(value)}
             className="flex flex-col space-y-4"
           >
             <div className="flex items-center space-x-8">

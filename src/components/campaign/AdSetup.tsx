@@ -4,7 +4,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MultiSelect } from "@/components/ui/multi-select";
 import { ChevronRight, Upload } from 'lucide-react';
 import { AdAccount, getAdAccounts } from '@/services/adAccountService';
 import { getPages, Page } from '@/services/pages';
@@ -25,6 +24,10 @@ import { Button } from '../ui/button';
 import OBJECTIVES from '@/data/objectives';
 import getImageHashKey from '@/services/getImageHashKey';
 import getCreativeAds, { CreativeAd } from '@/services/creativeAds';
+import { MultiSelect } from "@/components/ui/multi-select";
+import { Checkbox } from '../ui/checkbox';
+
+
 
 const posts = [
   { id: 'post1', name: 'Product Announcement Post' },
@@ -106,7 +109,7 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
     if (selectedAdAccount) {
       fetchPages();
       fetchCampaigns();
-      fetchcreativeAds(); 
+      fetchcreativeAds();
     }
   }, [selectedAdAccount]);
 
@@ -258,7 +261,7 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
                       <FormLabel>Objective</FormLabel>
                       <Select onValueChange={(value) => {
                         field.onChange(value);
-                        updateCampaign({campaign_data: {...campaign.campaign_data, objective: value}})
+                        updateCampaign({ campaign_data: { ...campaign.campaign_data, objective: value } })
                         // updateObjectiveValue(value)
                       }} defaultValue={field.value}>
                         <FormControl>
@@ -267,7 +270,7 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                        {OBJECTIVES.map(objective => (
+                          {OBJECTIVES.map(objective => (
                             <SelectItem key={objective.title} value={objective.title}>
                               {objective.title}
                             </SelectItem>
@@ -325,7 +328,31 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
                 />
 
                 {/* Special Ad Categories */}
-                <FormField
+                {/* <FormField
+                  control={control}
+                  name="campaign_data.special_ad_categories"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Special Ad Categories</FormLabel>
+                      <FormControl>
+                        <MultiSelect
+                          options={[
+                            { label: "None", value: "NONE" },
+                            { label: "Credit", value: "CREDIT" },
+                            { label: "Employment", value: "EMPLOYMENT" },
+                            { label: "Housing", value: "HOUSING" },
+                            { label: "Issues/Elections/Politics", value: "ISSUES_ELECTIONS_POLITICS" },
+                          ]}
+                          value={field.value}
+                          onValueChange={field.onChange}
+                          placeholder="Select categories..."
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                /> */}
+                {/* <FormField
                   control={control}
                   name="campaign_data.special_ad_categories"
                   render={({ field }) => (
@@ -348,7 +375,49 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
                       <FormMessage />
                     </FormItem>
                   )}
-                />
+                /> */}
+              <FormField
+                control={control}
+                name="campaign_data.special_ad_categories"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Special Ad Categories</FormLabel>
+                    <FormControl>
+                      <div className="flex flex-col gap-2">
+                        {[
+                          { value: 'NONE', label: 'NONE' },
+                          { value: 'CREDIT', label: 'CREDIT' },
+                          { value: 'EMPLOYMENT', label: 'EMPLOYMENT' },
+                          { value: 'HOUSING', label: 'HOUSING' },
+                          { value: 'ISSUES_ELECTIONS_POLITICS', label: 'ISSUES_ELECTIONS_POLITICS' }
+                        ].map(option => (
+                          <div key={option.value} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`special-ad-category-${option.value}`}
+                              checked={Array.isArray(field.value) ? field.value.includes(option.value) : false}
+                              onCheckedChange={checked => {
+                                let newValue: string[] = Array.isArray(field.value) ? [...field.value] : [];
+                                if (checked) {
+                                  if (!newValue.includes(option.value)) {
+                                    newValue.push(option.value);
+                                  }
+                                } else {
+                                  newValue = newValue.filter(v => v !== option.value);
+                                }
+                                field.onChange(newValue);
+                              }}
+                            />
+                            <label htmlFor={`special-ad-category-${option.value}`} className="text-sm">
+                              {option.label}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               </div>
             )}
 
@@ -360,8 +429,8 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
                   render={({ field }) => (
                     <FormItem>
                       <Select onValueChange={(value) => {
-                          field.onChange(value);
-                          updateCampaign({campaign_id: value})
+                        field.onChange(value);
+                        updateCampaign({ campaign_id: value })
                       }} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
