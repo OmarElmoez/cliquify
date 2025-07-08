@@ -68,7 +68,7 @@ export const TargetingSetup: React.FC<TargetingSetupProps> = ({
     const fetchOptimizationGoals = async () => {
       try {
         const res = await getOptimizationGoals({objective: campaign.campaign_data.objective});
-        setOptimizationGoals(res["optimization goals"]);
+        setOptimizationGoals(res.optimization_goals);
       } catch (error) {
         console.error('Error fetching optimization goals:', error);
       }
@@ -191,7 +191,7 @@ export const TargetingSetup: React.FC<TargetingSetupProps> = ({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {optimizationGoals.map(goal => (
+                          {optimizationGoals?.map(goal => (
                             <SelectItem value={goal} key={goal}>{goal}</SelectItem>
                           ))}
                         </SelectContent>
