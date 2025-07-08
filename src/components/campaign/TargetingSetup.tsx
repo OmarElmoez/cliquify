@@ -19,6 +19,7 @@ import {
 import { ChevronRight } from 'lucide-react';
 import { Button } from '../ui/button';
 import OBJECTIVES from '@/data/objectives';
+import getOptimizationGoals from '@/services/optimization-goals';
 
 interface TargetingSetupProps {
   campaign: CampaignData;
@@ -49,8 +50,9 @@ export const TargetingSetup: React.FC<TargetingSetupProps> = ({
   const [bidValue, setBidValue] = useState('');
   // const [adsetType, setAdsetType] = useState<'new' | 'existing'>('new');
   const [selectedOptimizationGoal, setSelectedOptimizationGoal] = useState('')
+  const [optimizationGoals, setOptimizationGoals] = useState<string[]>([])
 
-  const relattedOptimizationGoals = selectedObjective && OBJECTIVES.filter(objective => objective.title === selectedObjective)[0]?.optimizationGoals || []
+  // const relattedOptimizationGoals = selectedObjective && OBJECTIVES.filter(objective => objective.title === selectedObjective)[0]?.optimizationGoals || []
 
 
   useEffect(() => {
@@ -62,7 +64,18 @@ export const TargetingSetup: React.FC<TargetingSetupProps> = ({
         console.error('Error fetching adsets:', error);
       }
     };
+
+    const fetchOptimizationGoals = async () => {
+      try {
+        const res = await getOptimizationGoals({objective: campaign.campaign_data.objective});
+        setOptimizationGoals(res.optimization_goals);
+      } catch (error) {
+        console.error('Error fetching optimization goals:', error);
+      }
+    };
+
     fetchAdsets();
+    fetchOptimizationGoals()
   }, []);
 
   return (
@@ -177,7 +190,7 @@ export const TargetingSetup: React.FC<TargetingSetupProps> = ({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {relattedOptimizationGoals.map(goal => (
+                          {optimizationGoals.map(goal => (
                             <SelectItem value={goal} key={goal}>{goal}</SelectItem>
                           ))}
                         </SelectContent>
