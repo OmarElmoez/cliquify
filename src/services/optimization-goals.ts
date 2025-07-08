@@ -1,7 +1,7 @@
 import axiosInstance from "@/lib/axios"
 
 type optimizationGoalsResponse = {
-  optimization_goals: string[];
+  "optimization goals": string[];
 }
 
 const getOptimizationGoals = async ({objective}: {objective: string}): Promise<optimizationGoalsResponse> => {

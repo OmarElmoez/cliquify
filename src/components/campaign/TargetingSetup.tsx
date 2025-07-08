@@ -68,7 +68,7 @@ export const TargetingSetup: React.FC<TargetingSetupProps> = ({
     const fetchOptimizationGoals = async () => {
       try {
         const res = await getOptimizationGoals({objective: campaign.campaign_data.objective});
-        setOptimizationGoals(res.optimization_goals);
+        setOptimizationGoals(res["optimization goals"]);
       } catch (error) {
         console.error('Error fetching optimization goals:', error);
       }
