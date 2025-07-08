@@ -139,7 +139,6 @@ const CreateCampaign = () => {
   };
 
   const handlePublish = async (data: CampaignData) => {
-    console.log("Publishing campaign");
     const isValid = await validateCurrentStep();
     if (isValid) {
       // Create a copy of the data
@@ -167,8 +166,9 @@ const CreateCampaign = () => {
       }
 
       const response = await createCampaign(payload);
-      console.log("Campaign created:", response);
-      navigate('/');
+      if(response.campaign_id) {
+        navigate('/dashboard');
+      }
     } else {
       toast.error('Please fill in all the fields');
     }

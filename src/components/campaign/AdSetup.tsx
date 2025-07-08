@@ -71,7 +71,18 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
       }
     };
 
+    const fetchcreativeAds = async () => {
+      try {
+        const res = await getCreativeAds();
+        setCreativeAds(res);
+      } catch (error) {
+        console.error('Error fetching creative ads:', error);
+        toast.error('Error fetching creative ads');
+      }
+    };
+
     fetchAdAccounts();
+    fetchcreativeAds();
   }, []);
 
   useEffect(() => {
@@ -96,20 +107,9 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
       }
     };
 
-    const fetchcreativeAds = async () => {
-      try {
-        const res = await getCreativeAds({ account_id: selectedAdAccount });
-        setCreativeAds(res.response);
-      } catch (error) {
-        console.error('Error fetching creative ads:', error);
-        toast.error('Error fetching creative ads');
-      }
-    };
-
     if (selectedAdAccount) {
       fetchPages();
       fetchCampaigns();
-      fetchcreativeAds();
     }
   }, [selectedAdAccount]);
 
@@ -476,7 +476,7 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
             </div>
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="existing" id="existing-post" />
-              <Label htmlFor="existing-post">Select existing post</Label>
+              <Label htmlFor="existing-post">Select existing ad</Label>
             </div>
           </RadioGroup>
 
@@ -490,13 +490,13 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select existing post" />
+                          <SelectValue placeholder="Select existing ad" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         {creativeAds?.map(post => (
-                          <SelectItem key={post.id} value={post.id}>
-                            {post.name}
+                          <SelectItem key={post.creative__creative_id} value={post.creative__creative_id}>
+                            {post.creative__name}
                           </SelectItem>
                         ))}
                       </SelectContent>

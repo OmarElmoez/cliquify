@@ -2,26 +2,14 @@ import axiosInstance from "@/lib/axios"
 
 
 export type CreativeAd = {
-  id: string;
-  name: string;
-  object_story_spec: {
-    page_id: string;
-    link_data: {
-      link: string;
-      message: string;
-      name: string;
-    };
-  };
+  creative__creative_id: string;
+  creative__name: string;
+  // there are more fields, but we just get what we need
 };
 
-
-type getAdsResponse = {
-  response: CreativeAd[];
-}
-
-const getCreativeAds = async ({account_id}: {account_id: string}): Promise<getAdsResponse> => {
+const getCreativeAds = async (): Promise<CreativeAd[]> => {
   try {
-    const res = await axiosInstance.get<getAdsResponse>(`/creatives/list/?account_id=${account_id}`);
+    const res = await axiosInstance.get<CreativeAd[]>(`/adcreative/list/`);
     return res.data;
   } catch (error) {
     throw error('faild to fetch createive ads: ', error)
