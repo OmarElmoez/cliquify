@@ -41,7 +41,7 @@ export const campaignDataSchema = z.object({
     name: z.string().max(100, "Creative name must be less than 100 characters").optional(),
     object_story_spec: z.object({
       link_data: z.object({
-        link: z.string().url('please provide a valid link').min(1, 'enter the url'),
+        link: z.string().optional(),
         message: z.string().max(2000, "Message must be less than 2000 characters").optional(),
         description: z.string().max(2000, "Description must be less than 2000 characters").optional(),
         call_to_action: z.object({
