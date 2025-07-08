@@ -117,7 +117,7 @@ export const TargetingSetup: React.FC<TargetingSetupProps> = ({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {adsets.map(adset => (
+                          {adsets?.map(adset => (
                             <SelectItem key={adset.id} value={adset.id}>
                               {adset.name}
                             </SelectItem>
