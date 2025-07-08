@@ -321,19 +321,16 @@ const Campaigns = () => {
                             <Loader className="h-4 w-4 animate-spin" />
                           </div>
                         ) : (
-                          <Select 
-                            value={campaign.status} 
-                            onValueChange={(value: CampaignStatus) => handleStatusToggle(campaign.id, value)}
-                          >
-                            <SelectTrigger className="w-24">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="ACTIVE">Active</SelectItem>
-                              <SelectItem value="PAUSED">Paused</SelectItem>
-                              {/* <SelectItem value="ARCHIVED">Archived</SelectItem> */}
-                            </SelectContent>
-                          </Select>
+                          <Switch
+                            checked={campaign.status === "ACTIVE"}
+                            onCheckedChange={(checked) =>
+                              handleStatusToggle(
+                                campaign.id,
+                                checked ? "ACTIVE" : "PAUSED"
+                              )
+                            }
+                            className="data-[state=checked]:bg-green-600 data-[state=unchecked]:bg-gray-300"
+                          />
                         )}
                       </div>
                     </TableCell>
