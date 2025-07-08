@@ -29,9 +29,9 @@ export const campaignDataSchema = z.object({
       age_min: z.number().optional(),
       age_max: z.number().optional(),
       genders: z.array(z.number()).optional(),
-    }),
-    geo_locations: z.object({
-      countries: z.array(z.string()).optional(),
+      geo_locations: z.object({
+        countries: z.array(z.string()).optional(),
+      }),
     }),
   }),
   creative_data: z.object({

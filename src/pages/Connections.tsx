@@ -9,6 +9,7 @@ import { signInWithMeta } from '@/services/authService';
 import { AdAccount, getAdAccounts } from '@/services/adAccountService';
 import Loading from '@/components/shared/Loader';
 import { access } from 'fs';
+import checkConnections from '@/services/check-connections';
 
 // Mock data
 const mockFacebookAccounts = [
@@ -180,6 +181,7 @@ const AccountsTable = ({ accounts, platform }: { accounts: AdAccount[], platform
 const Connections = () => {
   const [adAccounts, setAdAccounts] = useState<AdAccount[]>()
   const [isLoading, setIsLoading] = useState(true)
+  const [isConnected, setIsConnected] = useState(false)
 
   useEffect(() => {
 
@@ -194,7 +196,21 @@ const Connections = () => {
         setIsLoading(false)
       }
     }
+
+    const checkConnectionStatus = async () => {
+      try {
+        const res = await checkConnections();
+        if (res) {
+          setIsConnected(true)
+        }
+      } catch (error) {
+        console.error('faild to check connection status')
+      }
+    }
+
+
     fetchAdAccounts()
+    checkConnectionStatus()
   }, []);
 
   return (
@@ -228,7 +244,7 @@ const Connections = () => {
             />
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
           </div> */}
-                <ConnectAccountModal />
+                {!isConnected && <ConnectAccountModal />}
               </div>
             </div>
 

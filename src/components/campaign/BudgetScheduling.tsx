@@ -186,7 +186,7 @@ export const BudgetScheduling = ({
           />
 
           {/* End Date & Time (only for lifetime budget) */}
-          {budgetType === 'lifetime' && (
+          {(
             <FormField
               control={control}
               name="adset_data.end_time"

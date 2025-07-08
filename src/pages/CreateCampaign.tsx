@@ -58,9 +58,9 @@ const CreateCampaign = () => {
           age_min: 18,
           age_max: 65,
           genders: [1, 2],
-        },
-        geo_locations: {
-          countries: [],
+          geo_locations: {
+            countries: [],
+          },
         },
       },
       creative_data: {
@@ -165,6 +165,24 @@ const CreateCampaign = () => {
         delete payload.creative_id;
       }
 
+      if (data?.adset_data?.bid_strategy === "LOWEST_COST_WITHOUT_CAP") {
+        delete payload.adset_data.bid_amount
+      }
+
+      if (data?.adset_data?.daily_budget && data?.adset_data?.end_time === ', ') {
+        delete payload.adset_data.end_time
+      }
+
+      if (data?.adset_data?.daily_budget && data?.adset_data?.start_time === ', ') {
+        delete payload.adset_data.start_time
+      }
+
+      if (data?.adset_data?.daily_budget) {
+        delete payload.adset_data.lifetime_budget
+      } else if (data?.adset_data?.lifetime_budget) {
+        delete payload.adset_data.daily_budget
+      }
+
       const response = await createCampaign(payload);
       if(response.campaign_id) {
         navigate('/dashboard');
@@ -181,9 +199,6 @@ const CreateCampaign = () => {
 
   const updateCampaign = (data: Partial<CampaignData>) => {
     setCampaign(prev => ({ ...prev, ...data }));
-    // Also update form values
-    form.setValue('campaign_data.name', data.campaign_data?.name || '');
-    // Add more field updates as needed
   };
 
   if (step === 'adType') {
@@ -273,7 +288,15 @@ const CreateCampaign = () => {
                 hasErrors: getStepErrors('budget'),
               },
             ]}
-            onStepClick={() => { }}
+            onStepClick={(stepId) => {
+              // Only allow going back to previous steps, not forward
+              const stepOrder = ['ad', 'targeting', 'budget'];
+              const currentIndex = stepOrder.indexOf(activeTab);
+              const clickedIndex = stepOrder.indexOf(stepId);
+              if (clickedIndex < currentIndex) {
+                setActiveTab(stepId);
+              }
+            }}
           />
 
           <Form {...form}>

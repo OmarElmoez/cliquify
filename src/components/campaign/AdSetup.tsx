@@ -44,11 +44,12 @@ interface AdSetupProps {
   updateCampaignType: (value: string) => void
 }
 
-export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, campaignType, updateCampaignType }: AdSetupProps) => {
+export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, campaignType, updateCampaignType, setValue }: AdSetupProps) => {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const res = await getImageHashKey(e.target.files[0])
       updateCampaign({ image_hash: res.image_hash.hash });
+      setValue('image_hash', res.image_hash.hash)
     }
   };
 
@@ -114,8 +115,30 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
   }, [selectedAdAccount]);
 
   const getCampaignObjective = (campaingId: string) => {
-    const {objective} = campaigns.find(campaign => campaign.id === campaingId);
+    const { objective } = campaigns.find(campaign => campaign.id === campaingId);
     updateCampaign({ campaign_data: { ...campaign.campaign_data, objective } })
+  }
+
+  const adCategoriesOptions = (objectiveVal: string) => {
+
+    switch (objectiveVal) {
+      case 'OUTCOME_AWARENESS':
+      case 'OUTCOME_TRAFFIC':
+      case 'OUTCOME_ENGAGEMENT':
+      case 'OUTCOME_APP_PROMOTION':
+        return [{ value: 'NONE', label: 'NONE' }];
+
+      case 'OUTCOME_LEADS':
+      case 'OUTCOME_SALES':
+        return [{ value: 'NONE', label: 'NONE' },
+        { value: 'CREDIT', label: 'CREDIT' },
+        { value: 'EMPLOYMENT', label: 'EMPLOYMENT' },
+        { value: 'HOUSING', label: 'HOUSING' },
+        { value: 'ISSUES_ELECTIONS_POLITICS', label: 'ISSUES_ELECTIONS_POLITICS' }]
+
+      default:
+        return [];
+    }
   }
 
   return (
@@ -250,6 +273,7 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
                         <Input
                           placeholder="Enter campaign name"
                           {...field}
+
                         />
                       </FormControl>
                       <FormMessage />
@@ -381,48 +405,42 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
                     </FormItem>
                   )}
                 /> */}
-              <FormField
-                control={control}
-                name="campaign_data.special_ad_categories"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Special Ad Categories</FormLabel>
-                    <FormControl>
-                      <div className="flex flex-col gap-2">
-                        {[
-                          { value: 'NONE', label: 'NONE' },
-                          { value: 'CREDIT', label: 'CREDIT' },
-                          { value: 'EMPLOYMENT', label: 'EMPLOYMENT' },
-                          { value: 'HOUSING', label: 'HOUSING' },
-                          { value: 'ISSUES_ELECTIONS_POLITICS', label: 'ISSUES_ELECTIONS_POLITICS' }
-                        ].map(option => (
-                          <div key={option.value} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`special-ad-category-${option.value}`}
-                              checked={Array.isArray(field.value) ? field.value.includes(option.value) : false}
-                              onCheckedChange={checked => {
-                                let newValue: string[] = Array.isArray(field.value) ? [...field.value] : [];
-                                if (checked) {
-                                  if (!newValue.includes(option.value)) {
-                                    newValue.push(option.value);
+                <FormField
+                  control={control}
+                  name="campaign_data.special_ad_categories"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Special Ad Categories</FormLabel>
+                      <FormControl>
+                        <div className="flex flex-col gap-2">
+                          {(adCategoriesOptions(campaign.campaign_data?.objective)).map(option => (
+                            <div key={option.value} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`special-ad-category-${option.value}`}
+                                checked={Array.isArray(field.value) ? field.value.includes(option.value) : false}
+                                onCheckedChange={checked => {
+                                  let newValue: string[] = Array.isArray(field.value) ? [...field.value] : [];
+                                  if (checked) {
+                                    if (!newValue.includes(option.value)) {
+                                      newValue.push(option.value);
+                                    }
+                                  } else {
+                                    newValue = newValue.filter(v => v !== option.value);
                                   }
-                                } else {
-                                  newValue = newValue.filter(v => v !== option.value);
-                                }
-                                field.onChange(newValue);
-                              }}
-                            />
-                            <label htmlFor={`special-ad-category-${option.value}`} className="text-sm">
-                              {option.label}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                                  field.onChange(newValue);
+                                }}
+                              />
+                              <label htmlFor={`special-ad-category-${option.value}`} className="text-sm">
+                                {option.label}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
             )}
 
@@ -626,8 +644,8 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
                       </FormControl>
                       <SelectContent>
                         {callToActions.map(cta => (
-                          <SelectItem key={cta} value={cta}>
-                            {cta}
+                          <SelectItem key={cta.label} value={cta.value}>
+                            {cta.label}
                           </SelectItem>
                         ))}
                       </SelectContent>

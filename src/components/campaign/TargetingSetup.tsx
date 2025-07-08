@@ -279,7 +279,7 @@ export const TargetingSetup: React.FC<TargetingSetupProps> = ({
                 {/* Location */}
                 <FormField
                   control={control}
-                  name="adset_data.geo_locations.countries"
+                  name="adset_data.targeting.geo_locations.countries"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Location</FormLabel>
