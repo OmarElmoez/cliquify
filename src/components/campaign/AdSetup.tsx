@@ -113,6 +113,11 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
     }
   }, [selectedAdAccount]);
 
+  const getCampaignObjective = (campaingId: string) => {
+    const {objective} = campaigns.find(campaign => campaign.id === campaingId);
+    updateCampaign({ campaign_data: { ...campaign.campaign_data, objective } })
+  }
+
   return (
     <div className="max-w-3xl space-y-8">
       {/* Ad Name */}
@@ -431,6 +436,7 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
                       <Select onValueChange={(value) => {
                         field.onChange(value);
                         updateCampaign({ campaign_id: value })
+                        getCampaignObjective(value)
                       }} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
