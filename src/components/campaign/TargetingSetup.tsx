@@ -73,8 +73,9 @@ export const TargetingSetup: React.FC<TargetingSetupProps> = ({
         console.error('Error fetching optimization goals:', error);
       }
     };
-
-    fetchAdsets();
+    if (campaign.account_id) {
+      fetchAdsets();
+    }
     fetchOptimizationGoals()
   }, []);
 
