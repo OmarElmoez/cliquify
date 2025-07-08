@@ -32,17 +32,23 @@ export const campaignDataSchema = z.object({
       geo_locations: z.object({
         countries: z.array(z.string()).optional(),
       }),
+      targeting_automation: z.object({
+        advantage_audience: z.number().optional(),
+      }).optional(),
     }),
   }),
   creative_data: z.object({
     name: z.string().max(100, "Creative name must be less than 100 characters").optional(),
     object_story_spec: z.object({
       link_data: z.object({
-        link: z.string().optional(),
+        link: z.string().url('please provide a valid link').min(1, 'enter the url'),
         message: z.string().max(2000, "Message must be less than 2000 characters").optional(),
         description: z.string().max(2000, "Description must be less than 2000 characters").optional(),
         call_to_action: z.object({
           type: z.string().optional(),
+          value: z.object({
+            link: z.string().optional()
+          })
         }),
       }),
     }),
@@ -51,7 +57,28 @@ export const campaignDataSchema = z.object({
     name: z.string().min(1, "Ad name is required").max(100, "Ad name must be less than 100 characters"),
     status: z.string().min(1, "Status is required"),
   }),
-});
+})
+// .transform((data) => ({
+//   ...data,
+//   // Ensure that creative_data.object_story_spec.link_data.call_to_action.value.link
+//   // is set to the same value as creative_data.object_story_spec.link_data.link
+//   creative_data: {
+//     ...data.creative_data,
+//     object_story_spec: {
+//       ...data.creative_data?.object_story_spec,
+//       link_data: {
+//         ...data.creative_data?.object_story_spec?.link_data,
+//         call_to_action: {
+//           ...data.creative_data?.object_story_spec?.link_data?.call_to_action,
+//           value: {
+//             ...data.creative_data?.object_story_spec?.link_data?.call_to_action?.value,
+//             link: data.creative_data?.object_story_spec?.link_data?.link
+//           }
+//         }
+//       }
+//     }
+//   },
+// }))
 
 export type CampaignData = z.infer<typeof campaignDataSchema>;
 

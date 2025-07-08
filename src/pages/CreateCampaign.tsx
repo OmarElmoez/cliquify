@@ -61,6 +61,9 @@ const CreateCampaign = () => {
           geo_locations: {
             countries: [],
           },
+          targeting_automation: {
+            advantage_audience: 0
+          }
         },
       },
       creative_data: {
@@ -72,6 +75,9 @@ const CreateCampaign = () => {
             description: '',
             call_to_action: {
               type: '',
+              value: {
+                link: ""
+              }
             },
           },
         },
@@ -184,7 +190,7 @@ const CreateCampaign = () => {
       }
 
       const response = await createCampaign(payload);
-      if(response.campaign_id) {
+      if (response.campaign_id) {
         navigate('/dashboard');
       }
     } else {
@@ -225,6 +231,19 @@ const CreateCampaign = () => {
           <Button variant="ghost" size="sm" className="text-white hover:text-white/80" onClick={handleExit}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Exit
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-white border-white hover:text-white/80"
+            onClick={() => {
+              // Print form errors to the console
+              form.trigger().then(() => {
+                console.log("Form errors:", form.formState.errors);
+              });
+            }}
+          >
+            Console Form Errors
           </Button>
           {/* <Button variant="ghost" size="sm" className="text-white hover:text-white/80" onClick={handleSave}>
             Save
@@ -327,22 +346,22 @@ const CreateCampaign = () => {
                 />
               )}
 
-              {activeTab === 'budget' && adsetType === 'existing' ? 
-              (<Button
-                type="submit"
-              >
-                Publish
-                <ChevronRight className="ml-2 h-4 w-4" />
-              </Button>) 
-              : (activeTab === 'budget' && adsetType !== 'existing') &&
-              (
-                <BudgetScheduling
-                  campaign={campaign}
-                  updateCampaign={updateCampaign}
-                  control={form.control}
-                  setValue={form.setValue}
-                />
-              )}
+              {activeTab === 'budget' && adsetType === 'existing' ?
+                (<Button
+                  type="submit"
+                >
+                  Publish
+                  <ChevronRight className="ml-2 h-4 w-4" />
+                </Button>)
+                : (activeTab === 'budget' && adsetType !== 'existing') &&
+                (
+                  <BudgetScheduling
+                    campaign={campaign}
+                    updateCampaign={updateCampaign}
+                    control={form.control}
+                    setValue={form.setValue}
+                  />
+                )}
 
 
               <div className="flex justify-end mt-8">
