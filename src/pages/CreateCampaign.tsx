@@ -154,6 +154,17 @@ const CreateCampaign = () => {
   const handlePublish = async (data: CampaignData) => {
     const isValid = await validateCurrentStep();
     if (isValid) {
+      if (
+        data &&
+        data.creative_data &&
+        data.creative_data.object_story_spec &&
+        data.creative_data.object_story_spec.link_data &&
+        data.creative_data.object_story_spec.link_data.call_to_action &&
+        data.creative_data.object_story_spec.link_data.call_to_action.value
+      ) {
+        data.creative_data.object_story_spec.link_data.call_to_action.value.link =
+          data.creative_data.object_story_spec.link_data.link;
+      }
       // Create a copy of the data
       const payload = { ...data };
 
@@ -195,6 +206,7 @@ const CreateCampaign = () => {
       } else if (data?.adset_data?.lifetime_budget) {
         delete payload.adset_data.daily_budget
       }
+
 
       if (data?.adset_data?.lifetime_budget && data?.adset_data?.end_time === ', ') {
         console.log('no end data provided');

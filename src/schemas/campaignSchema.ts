@@ -47,7 +47,7 @@ export const campaignDataSchema = z.object({
         call_to_action: z.object({
           type: z.string().optional(),
           value: z.object({
-            link: z.string().optional()
+            link: z.string()
           })
         }),
       }),
