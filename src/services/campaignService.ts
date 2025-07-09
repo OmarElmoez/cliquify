@@ -47,6 +47,12 @@ export const getCampaigns = async ({account_id, page = 1}: CampaignsProps): Prom
   }
 };
 
+/*
+  Changes to be done:
+    - in response there will be a key response holds data => response: []
+    - id key will be campaign_id in response
+*/
+
 export const updateCampaignStatus = async (
   campaignId: string,
   status: CampaignStatus,

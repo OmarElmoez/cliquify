@@ -15,6 +15,7 @@ import { toast } from "@/components/ui/sonner";
 import { dummyCampaignsResponse } from '@/data/dummyCampaigns';
 import GoogleSignInButton from '@/components/ui/GoogleSignInButton';
 import MetaSignInButton from '@/components/ui/MetaSignInButton';
+import { useDialog } from '@/hooks/useDialog';
 
 const FacebookIcon = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -30,18 +31,12 @@ const Campaigns = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [statusLoading, setStatusLoading] = useState<string | null>(null); // Store the campaign ID that's being updated
   const [error, setError] = useState<string | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
-  const [dialogState, setDialogState] = useState<{
-    variant: 'error' | 'success';
-    title: string;
-    description: string;
-    showActionButton: boolean;
-  }>({
-    variant: 'error',
-    title: '',
-    description: '',
-    showActionButton: true
-  });
+  const {
+    isDialogOpen,
+    dialogState,
+    showDialog,
+    handleDialogClose
+  } = useDialog();
   const [campaignsData, setCampaignsData] = useState<CampaignsResponse>();
   const [currentPage, setCurrentPage] = useState<number>(1);
   // const [pagination, setPagination] = useState<{
@@ -180,28 +175,6 @@ const Campaigns = () => {
   //   setCampaignsData(campaignsData.results.map(campaign => 
   //     campaign.id === campaignId ? { ...campaign, status: currentStatus === "ACTIVE" ? "PAUSED" : "ACTIVE" } : campaign
   //   ));
-  // };
-
-  const showDialog = (variant: 'error' | 'success', title: string, description: string, showActionButton: boolean) => {
-    setDialogState({
-      variant,
-      title,
-      description,
-      showActionButton
-    });
-    setIsDialogOpen(true);
-  };
-
-  const handleDialogClose = (open: boolean) => {
-    setIsDialogOpen(open);
-  };
-
-  // const handleRetryAction = () => {
-  //   if (showRetryAction.type === 'accounts') {
-  //     loadAdAccounts();
-  //   } else if (showRetryAction.type === 'campaigns') {
-  //     loadCampaigns(selectedAccount, currentPage);
-  //   }
   // };
 
   return (

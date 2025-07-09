@@ -21,3 +21,9 @@ const getAdsets = async ({campaign_id}: {campaign_id: string}): Promise<AdsetsRe
 };
 
 export default getAdsets;
+
+/*
+  Changes to be done:
+    - endpoint will be adsets/list/
+    - id key will be adset_id in response
+*/

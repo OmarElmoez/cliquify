@@ -20,6 +20,7 @@ import { ChevronRight } from 'lucide-react';
 import { Button } from '../ui/button';
 import OBJECTIVES from '@/data/objectives';
 import getOptimizationGoals from '@/services/optimization-goals';
+import { cn } from '@/lib/utils';
 
 interface TargetingSetupProps {
   campaign: CampaignData;
@@ -58,7 +59,7 @@ export const TargetingSetup: React.FC<TargetingSetupProps> = ({
   useEffect(() => {
     const fetchAdsets = async () => {
       try {
-        const res = await getAdsets({campaign_id: campaign.campaign_id});
+        const res = await getAdsets({ campaign_id: campaign.campaign_id });
         setAdsets(res.response);
       } catch (error) {
         console.error('Error fetching adsets:', error);
@@ -67,7 +68,7 @@ export const TargetingSetup: React.FC<TargetingSetupProps> = ({
 
     const fetchOptimizationGoals = async () => {
       try {
-        const res = await getOptimizationGoals({objective: campaign.campaign_data.objective});
+        const res = await getOptimizationGoals({ objective: campaign.campaign_data.objective });
         setOptimizationGoals(res.optimization_goals);
       } catch (error) {
         console.error('Error fetching optimization goals:', error);
@@ -384,13 +385,30 @@ export const TargetingSetup: React.FC<TargetingSetupProps> = ({
         </div>
       </div>
       <div className="flex justify-end mt-8">
-        <Button
+        {adsetType === 'existing' ? (
+          <Button
+            type="submit"
+            disabled={control._formState?.isSubmitting}
+          >
+            {control._formState?.isSubmitting ? (
+              <>
+                <span className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full inline-block" />
+                Publishing...
+              </>
+            ) : (
+              <>
+                Publish
+                <ChevronRight className="ml-2 h-4 w-4" />
+              </>
+            )}
+          </Button>
+        ) : <Button
           type="button"
           onClick={handleNextStep}
         >
           Next
           <ChevronRight className="ml-2 h-4 w-4" />
-        </Button>
+        </Button>}
       </div>
     </div>
   );

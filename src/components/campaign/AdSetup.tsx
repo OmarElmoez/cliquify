@@ -248,7 +248,7 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
             <RadioGroup
               value={campaignType}
               onValueChange={(value: 'new' | 'existing') => updateCampaignType(value)}
-              className="flex flex-col space-y-2"
+              className="flex gap-4"
             >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="new" id="new-campaign" />
@@ -486,7 +486,7 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
           <RadioGroup
             value={adCreativeType}
             onValueChange={(value: 'existing' | 'new') => setAdCreativeType(value)}
-            className="flex flex-col space-y-2"
+            className="flex gap-4"
           >
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="new" id="create-new" />

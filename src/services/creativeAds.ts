@@ -17,3 +17,11 @@ const getCreativeAds = async (): Promise<CreativeAd[]> => {
 }
 
 export default getCreativeAds;
+
+/*
+  Changes to be done:
+    - endpoint will take ?account_id=act_483489024830589
+    - in response there will be a key response holds data => response: []
+    - id key will be creative_id in response
+    - name key in response will be just name
+*/

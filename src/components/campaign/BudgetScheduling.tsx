@@ -241,15 +241,25 @@ export const BudgetScheduling = ({
         </div>
         <div className="flex justify-end mt-8">
         <Button
-          type="submit"
-          onClick={() => {
-            setValue('adset_data.start_time', `${startData.date}, ${startData.time}`);
-            setValue('adset_data.end_time', `${endData.date}, ${endData.time}`);
-          }}
-        >
-          Publish
-          <ChevronRight className="ml-2 h-4 w-4" />
-        </Button>
+            type="submit"
+            disabled={control._formState?.isSubmitting}
+            onClick={() => {
+              setValue('adset_data.start_time', `${startData.date}, ${startData.time}`);
+              setValue('adset_data.end_time', `${endData.date}, ${endData.time}`);
+            }}
+          >
+            {control._formState?.isSubmitting ? (
+              <>
+                <span className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full inline-block" />
+                Publishing...
+              </>
+            ) : (
+              <>
+                Publish
+                <ChevronRight className="ml-2 h-4 w-4" />
+              </>
+            )}
+          </Button>
       </div>
       </div>
     </div>

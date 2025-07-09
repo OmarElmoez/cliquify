@@ -30,7 +30,7 @@ const ErrorDialog: React.FC<ErrorDialogProps> = ({
     if (open) {
       const timer = setTimeout(() => {
         onOpenChange(false);
-      }, 750);
+      }, 1000);
       
       return () => clearTimeout(timer);
     }

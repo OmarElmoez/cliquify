@@ -17,6 +17,8 @@ import getStepFields from '@/utils/getStepFields';
 import { Form } from "@/components/ui/form"
 import { toast } from 'sonner';
 import createCampaign from '@/services/createCampaign';
+import { useDialog } from '@/hooks/useDialog';
+import StatusDialog from '@/components/shared/StatusDialog';
 
 const CreateCampaign = () => {
   const navigate = useNavigate();
@@ -26,7 +28,12 @@ const CreateCampaign = () => {
   const [campaignType, setCampaignType] = useState<'new' | 'existing'>('new');
   const [adsetType, setAdsetType] = useState<'new' | 'existing'>('new');
   const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set());
-
+  const {
+    isDialogOpen,
+    dialogState,
+    showDialog,
+    handleDialogClose
+  } = useDialog();
   const form = useForm<CampaignData>({
     resolver: zodResolver(campaignDataSchema),
     mode: 'onChange',
@@ -189,6 +196,12 @@ const CreateCampaign = () => {
         delete payload.adset_data.daily_budget
       }
 
+      if (data?.adset_data?.lifetime_budget && data?.adset_data?.end_time === ', ') {
+        console.log('no end data provided');
+        showDialog('error', 'End Time not found', 'you should provide end time & date with lifetime budget.', false);
+        return;
+      }
+
       const response = await createCampaign(payload);
       if (response.campaign_id) {
         navigate('/dashboard');
@@ -225,6 +238,14 @@ const CreateCampaign = () => {
 
   return (
     <div className="min-h-screen bg-white">
+      <StatusDialog
+          open={isDialogOpen}
+          onOpenChange={handleDialogClose}
+          title={dialogState.title}
+          description={dialogState.description}
+          variant={dialogState.variant}
+          showActionButton={dialogState.showActionButton}
+        />
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 bg-[#1A1F2C] text-white px-4 py-2 flex items-center justify-between z-50">
         <div className="flex items-center gap-4">
@@ -232,7 +253,7 @@ const CreateCampaign = () => {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Exit
           </Button>
-          <Button
+          {/* <Button
             variant="outline"
             size="sm"
             className="text-white border-white hover:text-white/80"
@@ -244,7 +265,7 @@ const CreateCampaign = () => {
             }}
           >
             Console Form Errors
-          </Button>
+          </Button> */}
           {/* <Button variant="ghost" size="sm" className="text-white hover:text-white/80" onClick={handleSave}>
             Save
           </Button> */}
@@ -287,7 +308,20 @@ const CreateCampaign = () => {
           {/* Step Indicator */}
           <StepIndicator
             currentStep={activeTab}
-            steps={[
+            steps={adsetType === 'existing' ? [
+              {
+                id: 'ad',
+                label: 'Step 1',
+                isCompleted: completedSteps.has('ad'),
+                hasErrors: getStepErrors('ad'),
+              },
+              {
+                id: 'targeting',
+                label: 'Last Step',
+                isCompleted: completedSteps.has('targeting'),
+                hasErrors: getStepErrors('targeting'),
+              },
+            ] : [
               {
                 id: 'ad',
                 label: 'Step 1',
@@ -302,20 +336,12 @@ const CreateCampaign = () => {
               },
               {
                 id: 'budget',
-                label: 'Step 3',
+                label: 'Last Step',
                 isCompleted: completedSteps.has('budget'),
                 hasErrors: getStepErrors('budget'),
               },
             ]}
-            onStepClick={(stepId) => {
-              // Only allow going back to previous steps, not forward
-              const stepOrder = ['ad', 'targeting', 'budget'];
-              const currentIndex = stepOrder.indexOf(activeTab);
-              const clickedIndex = stepOrder.indexOf(stepId);
-              if (clickedIndex < currentIndex) {
-                setActiveTab(stepId);
-              }
-            }}
+            onStepClick={() => {}}
           />
 
           <Form {...form}>
