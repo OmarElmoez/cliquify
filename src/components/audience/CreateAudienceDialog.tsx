@@ -139,7 +139,7 @@ const CreateAudienceDialog = ({ open, onOpenChange }: CreateAudienceDialogProps)
         </div>
 
         {/* Lookalike Option */}
-        <div 
+        {/* <div 
           onClick={() => handleSelectAudienceType('lookalike')}
           className="border rounded-md p-4 cursor-pointer hover:bg-gray-50"
         >
@@ -152,7 +152,7 @@ const CreateAudienceDialog = ({ open, onOpenChange }: CreateAudienceDialogProps)
           <p className="text-gray-600">
             Create a lookalike audience based on your ideal customer and expand your reach to people who are more likely to convert.
           </p>
-        </div>
+        </div> */}
       </div>
     </>
   );
@@ -173,7 +173,7 @@ const CreateAudienceDialog = ({ open, onOpenChange }: CreateAudienceDialogProps)
 
       <div className="p-6 space-y-6">
         <div className="space-y-2">
-          <label className="font-medium">Source pixel</label>
+          <label className="font-medium">Source</label>
           <Select onValueChange={(value) => handleInputChange('source', value)}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select a pixel" />

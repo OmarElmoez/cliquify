@@ -82,12 +82,6 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
       }
     };
 
-    fetchAdAccounts();
-    fetchcreativeAds();
-  }, []);
-
-  useEffect(() => {
-
     const fetchPages = async () => {
       try {
         const response = await getPages();
@@ -97,6 +91,15 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
         toast.error('Error fetching pages');
       }
     };
+
+    fetchAdAccounts();
+    fetchcreativeAds();
+    fetchPages();
+  }, []);
+
+  useEffect(() => {
+
+
 
     const fetchCampaigns = async () => {
       try {
@@ -109,7 +112,6 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
     };
 
     if (selectedAdAccount) {
-      fetchPages();
       fetchCampaigns();
     }
   }, [selectedAdAccount]);
