@@ -201,6 +201,10 @@ const CreateCampaign = () => {
         delete payload.adset_data.start_time
       }
 
+      if (data?.adset_data?.lifetime_budget && data?.adset_data?.start_time === ', ') {
+        delete payload.adset_data.start_time
+      }
+
       if (data?.adset_data?.daily_budget) {
         delete payload.adset_data.lifetime_budget
       } else if (data?.adset_data?.lifetime_budget) {
