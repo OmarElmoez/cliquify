@@ -280,7 +280,7 @@ const Campaigns = () => {
               </TableHeader>
               <TableBody>
                 {campaignsData?.results.map(campaign => (
-                  <TableRow key={campaign.id}>
+                  <TableRow key={campaign.campaign_id}>
                     <TableCell className="py-4 px-4">
                       <div className="flex items-center gap-2">
                         <FacebookIcon />
@@ -289,7 +289,7 @@ const Campaigns = () => {
                     </TableCell>
                     <TableCell className="py-4 px-4">
                       <div className="flex items-center gap-2">
-                        {statusLoading === campaign.id ? (
+                        {statusLoading === campaign.campaign_id ? (
                           <div className="w-10 h-5 flex items-center justify-center">
                             <Loader className="h-4 w-4 animate-spin" />
                           </div>
@@ -298,7 +298,7 @@ const Campaigns = () => {
                             checked={campaign.status === "ACTIVE"}
                             onCheckedChange={(checked) =>
                               handleStatusToggle(
-                                campaign.id,
+                                campaign.campaign_id,
                                 checked ? "ACTIVE" : "PAUSED"
                               )
                             }

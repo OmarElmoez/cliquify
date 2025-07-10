@@ -1,7 +1,7 @@
 import axiosInstance from "@/lib/axios";
 
 export type Adset = {
-  id: string;
+  adset_id: string;
   name: string;
   // there are more fields, but we don't need them for now
 }
@@ -12,7 +12,7 @@ type AdsetsResponse = {
 
 const getAdsets = async ({campaign_id}: {campaign_id: string}): Promise<AdsetsResponse> => {
   try {
-    const res = await axiosInstance.get<AdsetsResponse>(`/adsets/?campaign_id=${campaign_id}`);
+    const res = await axiosInstance.get<AdsetsResponse>(`/adsets/list/?campaign_id=${campaign_id}`);
     return res.data;
   } catch (error) {
     console.error('Error fetching adsets:', error);
@@ -21,9 +21,3 @@ const getAdsets = async ({campaign_id}: {campaign_id: string}): Promise<AdsetsRe
 };
 
 export default getAdsets;
-
-/*
-  Changes to be done:
-    - endpoint will be adsets/list/
-    - id key will be adset_id in response
-*/

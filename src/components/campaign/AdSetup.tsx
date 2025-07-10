@@ -117,7 +117,7 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
   }, [selectedAdAccount]);
 
   const getCampaignObjective = (campaingId: string) => {
-    const { objective } = campaigns.find(campaign => campaign.id === campaingId);
+    const { objective } = campaigns.find(campaign => campaign.campaign_id === campaingId);
     updateCampaign({ campaign_data: { ...campaign.campaign_data, objective } })
   }
 
@@ -465,7 +465,7 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
                         </FormControl>
                         <SelectContent>
                           {campaigns.map(camp => (
-                            <SelectItem key={camp.id} value={camp.id}>
+                            <SelectItem key={camp.campaign_id} value={camp.campaign_id}>
                               {camp.name}
                             </SelectItem>
                           ))}

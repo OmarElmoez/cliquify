@@ -18,6 +18,7 @@ const getCreativeAds = async (): Promise<CreativeAd[]> => {
 
 export default getCreativeAds;
 
+// not deployed
 /*
   Changes to be done:
     - endpoint will take ?account_id=act_483489024830589
