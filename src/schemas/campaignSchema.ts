@@ -58,27 +58,6 @@ export const campaignDataSchema = z.object({
     status: z.string().min(1, "Status is required"),
   }),
 })
-// .transform((data) => ({
-//   ...data,
-//   // Ensure that creative_data.object_story_spec.link_data.call_to_action.value.link
-//   // is set to the same value as creative_data.object_story_spec.link_data.link
-//   creative_data: {
-//     ...data.creative_data,
-//     object_story_spec: {
-//       ...data.creative_data?.object_story_spec,
-//       link_data: {
-//         ...data.creative_data?.object_story_spec?.link_data,
-//         call_to_action: {
-//           ...data.creative_data?.object_story_spec?.link_data?.call_to_action,
-//           value: {
-//             ...data.creative_data?.object_story_spec?.link_data?.call_to_action?.value,
-//             link: data.creative_data?.object_story_spec?.link_data?.link
-//           }
-//         }
-//       }
-//     }
-//   },
-// }))
 
 export type CampaignData = z.infer<typeof campaignDataSchema>;
 

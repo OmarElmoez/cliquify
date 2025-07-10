@@ -1,4 +1,5 @@
 import axiosInstance from "@/lib/axios";
+import { AudienceData } from "@/schemas/audience";
 
 export type Audience = {
   id: string;
@@ -6,7 +7,7 @@ export type Audience = {
   rule: string;
 };
 
-const getAudiences = async (paginationUrl?: string): Promise<Audience[]> => {
+export const getAudiences = async (paginationUrl?: string): Promise<Audience[]> => {
   // const url = paginationUrl ? `${paginationUrl}` : '/custom-audiences/';
   const url = '/custom-audiences/';
   try {
@@ -18,4 +19,11 @@ const getAudiences = async (paginationUrl?: string): Promise<Audience[]> => {
   }
 };
 
-export default getAudiences;
+export const createAudience = async (data: AudienceData) => {
+  try {
+    const res = await axiosInstance.post('/custom-audiences/create/', data)
+    return res.data
+  } catch (error) {
+    console.error('faild to create audience, ', error) 
+  }
+}

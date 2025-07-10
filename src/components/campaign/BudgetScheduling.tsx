@@ -104,7 +104,7 @@ export const BudgetScheduling = ({
                         className="w-[180px]"
                         {...field}
                         onChange={(e) => {
-                          const value = parseFloat(e.target.value) || 0;
+                          const value = parseFloat(e.target.value);
                           field.onChange(value);
                           // Update both daily and lifetime budget based on selected type
                           if (budgetType === 'lifetime') {
