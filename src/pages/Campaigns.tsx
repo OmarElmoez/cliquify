@@ -182,13 +182,13 @@ const Campaigns = () => {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Ads</h1>
         <div className="flex gap-3">
-          <Button 
+          {/* <Button 
             variant="outline" 
             className="border-[#9b87f5] text-[#9b87f5] hover:bg-[#9b87f5]/10"
             onClick={() => setIsCreateAudienceOpen(true)}
           >
             Create audience
-          </Button>
+          </Button> */}
           <Button 
             className="bg-[#9b87f5] text-white hover:bg-[#9b87f5]/90"
             onClick={() => navigate('/campaigns/create')}
