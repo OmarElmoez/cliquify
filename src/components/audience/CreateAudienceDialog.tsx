@@ -551,7 +551,7 @@ const CreateAudienceDialog = ({ open, onOpenChange, handleSuccessfullState }: Cr
               <Button onClick={handleClose} variant="outline">
                 Cancel
               </Button>
-              <Button
+              {/* <Button
                 type="button"
                 variant="secondary"
                 onClick={() => {
@@ -560,7 +560,7 @@ const CreateAudienceDialog = ({ open, onOpenChange, handleSuccessfullState }: Cr
                 }}
               >
                 Log Form Errors
-              </Button>
+              </Button> */}
               <Button
                 type='submit'
                 className="bg-[#ff7a59] hover:bg-[#ff7a59]/90 text-white"
