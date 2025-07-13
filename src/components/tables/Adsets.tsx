@@ -44,7 +44,7 @@ const AdsetsTable = ({campaign_id}: {campaign_id: string}) => {
             <TableHead className="py-3 px-4 text-left font-medium text-sm text-gray-600">BUDGET</TableHead>
             <TableHead className="py-3 px-4 text-left font-medium text-sm text-gray-600">START TIME</TableHead>
             <TableHead className="py-3 px-4 text-left font-medium text-sm text-gray-600">END TIME</TableHead>
-            <TableHead className="py-3 px-4 text-left font-medium text-sm text-gray-600">CAMPAIGN</TableHead>
+            {/* <TableHead className="py-3 px-4 text-left font-medium text-sm text-gray-600">CAMPAIGN</TableHead> */}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -57,7 +57,7 @@ const AdsetsTable = ({campaign_id}: {campaign_id: string}) => {
           ) : (adsets?.length === 0) ? (
             <TableRow>
               <TableCell colSpan={6} className="py-8 text-center">
-                No ad sets available.
+                {!campaign_id ? "Please select a campaign to view ad sets." : "No ad sets available."}
               </TableCell>
             </TableRow>
           )
@@ -101,9 +101,9 @@ const AdsetsTable = ({campaign_id}: {campaign_id: string}) => {
                     "-"
                   )}
                 </TableCell>
-                <TableCell className="py-4 px-4">{adset.start_time}</TableCell>
-                <TableCell className="py-4 px-4">{adset.end_time}</TableCell>
-                <TableCell className="py-4 px-4">{adset.campaign_name || "-"}</TableCell>
+                <TableCell className="py-4 px-4">{adset.start_time || "-"}</TableCell>
+                <TableCell className="py-4 px-4">{adset.end_time  || "-"}</TableCell>
+                {/* <TableCell className="py-4 px-4">{adset.campaign_name || "-"}</TableCell> */}
               </TableRow>
             ))
           )
