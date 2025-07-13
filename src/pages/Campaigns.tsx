@@ -38,6 +38,7 @@ const Campaigns = () => {
     handleDialogClose
   } = useDialog();
   const [campaignsData, setCampaignsData] = useState<CampaignsResponse>();
+  console.log('campaign data: ', campaignsData);
   const [currentPage, setCurrentPage] = useState<number>(1);
   // const [pagination, setPagination] = useState<{
   //   next: string | null;
@@ -280,7 +281,7 @@ const Campaigns = () => {
               </TableHeader>
               <TableBody>
                 {campaignsData?.results.map(campaign => (
-                  <TableRow key={campaign.campaign_id}>
+                  <TableRow key={campaign.id}>
                     <TableCell className="py-4 px-4">
                       <div className="flex items-center gap-2">
                         <FacebookIcon />
@@ -289,7 +290,7 @@ const Campaigns = () => {
                     </TableCell>
                     <TableCell className="py-4 px-4">
                       <div className="flex items-center gap-2">
-                        {statusLoading === campaign.campaign_id ? (
+                        {statusLoading === campaign.id ? (
                           <div className="w-10 h-5 flex items-center justify-center">
                             <Loader className="h-4 w-4 animate-spin" />
                           </div>
@@ -298,7 +299,7 @@ const Campaigns = () => {
                             checked={campaign.status === "ACTIVE"}
                             onCheckedChange={(checked) =>
                               handleStatusToggle(
-                                campaign.campaign_id,
+                                campaign.id,
                                 checked ? "ACTIVE" : "PAUSED"
                               )
                             }

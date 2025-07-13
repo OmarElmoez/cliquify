@@ -2,7 +2,7 @@
 import axiosInstance from '@/lib/axios';
 
 export type Campaign = {
-  campaign_id: string;
+  id: string;
   name: string;
   status: string;
   buying_type: string;

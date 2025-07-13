@@ -18,6 +18,8 @@ import { AudienceData, audienceSchema } from '@/schemas/audience';
 import { AdAccount, getAdAccounts } from '@/services/adAccountService';
 import { toast } from 'sonner';
 import { createAudience } from '@/services/audience';
+import { MultiValueInput } from "@/components/ui/multi-value-input";
+
 
 
 type AudienceType = 'initial' | 'website-visitors' | 'lookalike';
@@ -345,44 +347,113 @@ const CreateAudienceDialog = ({ open, onOpenChange, handleSuccessfullState }: Cr
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value='all-visitors'>All website visitors</SelectItem>
-                  {/* <SelectItem value='pages-visitors'>People who visited specific web pages</SelectItem> */}
+                  <SelectItem value='pages-visitors'>People who visited specific web pages</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             {fields.map((field, index) => (
-              <FormField
-                key={field.id}
-                control={form.control}
-                name={`customaudience_data.rule.inclusions.rules.${index}.retention_seconds`}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="font-medium text-md">Audience retention</FormLabel>
-                    <div className='flex gap-4 items-center'>
-                      <FormControl>
-                        <Input
-                          placeholder='Number of days'
-                          className='w-1/2'
-                          type='number'
-                          min={1}
-                          max={180}
-                          {...field}
-                          onChange={e => {
-                            let value = Number(e.target.value);
-                            if (value > 180) value = 180;
-                            if (value < 1) value = 1;
-                            field.onChange(value);
-                          }}
-                        />
-                      </FormControl>
-                      <p className='font-medium'>Days</p>
+              <>
+
+                <FormField
+                  key={field.id}
+                  control={form.control}
+                  name={`customaudience_data.rule.inclusions.rules.${index}.retention_seconds`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-medium text-md">Audience retention</FormLabel>
+                      <div className='flex gap-4 items-center'>
+                        <FormControl>
+                          <Input
+                            placeholder='Number of days'
+                            className='w-1/2'
+                            type='number'
+                            min={1}
+                            max={180}
+                            {...field}
+                            onChange={e => {
+                              let value = Number(e.target.value);
+                              if (value > 180) value = 180;
+                              if (value < 1) value = 1;
+                              field.onChange(value);
+                            }}
+                          />
+                        </FormControl>
+                        <p className='font-medium'>Days</p>
+                      </div>
+                      <FormDescription>Enter Number between 1 and 180</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                {eventType === 'pages-visitors' && (
+                  <section className='bg-[#f5f6f7] p-4 rounded-lg'>
+                    <div className='flex gap-4'>
+                      <FormField
+                        control={form.control}
+                        name={`customaudience_data.rule.inclusions.rules.${index}.filter.filters.${index}.field`}
+                        render={({ field }) => (
+                          <FormItem className='w-3/5'>
+                            <Select onValueChange={field.onChange} defaultValue='url' disabled>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="url">URL</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name={`customaudience_data.rule.inclusions.rules.${index}.filter.filters.${index}.operator`}
+                        render={({ field }) => (
+                          <FormItem className='flex-1'>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="select an operator" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="i_contains">contains</SelectItem>
+                                <SelectItem value="i_not_contains">doesn't contain</SelectItem>
+                                <SelectItem value="i_equals">equals</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </FormItem>
+                        )}
+                      />
                     </div>
-                    <FormDescription>Enter Number between 1 and 180</FormDescription>
-                    <FormMessage />
-                  </FormItem>
+
+                    <div className='mt-2'>
+                      <FormField
+                        control={form.control}
+                        name={`customaudience_data.rule.inclusions.rules.${index}.filter.filters.${index}.value`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <MultiValueInput
+                                value={field.value || []}
+                                onChange={field.onChange}
+                                onBlur={field.onBlur}
+                                placeholder="Type a value and press Enter"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </section>
                 )}
-              />
+              </>
             ))}
+
 
             <FormField
               control={form.control}
