@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { Fragment, useEffect, useState } from 'react';
 import { ArrowLeft, X } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,9 @@ import { AdAccount, getAdAccounts } from '@/services/adAccountService';
 import { toast } from 'sonner';
 import { createAudience } from '@/services/audience';
 import { MultiValueInput } from "@/components/ui/multi-value-input";
+import StatusDialog from '@/components/shared/StatusDialog';
+import { useDialog } from '@/hooks/useDialog';
+
 
 
 
@@ -75,7 +78,7 @@ const CreateAudienceDialog = ({ open, onOpenChange, handleSuccessfullState }: Cr
                   operator: '',
                   filters: [
                     {
-                      field: '',
+                      field: "",
                       operator: '',
                       value: []
                     }
@@ -94,6 +97,13 @@ const CreateAudienceDialog = ({ open, onOpenChange, handleSuccessfullState }: Cr
     control: form.control,
     name: 'customaudience_data.rule.inclusions.rules'
   })
+
+  const {
+    isDialogOpen,
+    dialogState,
+    showDialog,
+    handleDialogClose
+  } = useDialog();
 
   const handleBack = () => {
     setCurrentView('initial');
@@ -232,23 +242,60 @@ const CreateAudienceDialog = ({ open, onOpenChange, handleSuccessfullState }: Cr
 
   const onSubmit = async (data: AudienceData) => {
     // Convert retention_days to seconds if present in the data
-    if (data.customaudience_data?.rule?.inclusions?.rules) {
-      data.customaudience_data.rule.inclusions.rules = data.customaudience_data.rule.inclusions.rules.map(rule => {
-        return {
-          ...rule,
-          retention_seconds: rule.retention_seconds * 24 * 60 * 60
-        };
-      });
+    // Combine: map retention_seconds and clean empty filters in one pass, without mutating input
+    let cleanedData = { ...data };
+    if (cleanedData.customaudience_data?.rule?.inclusions?.rules) {
+      cleanedData = {
+        ...cleanedData,
+        customaudience_data: {
+          ...cleanedData.customaudience_data,
+          rule: {
+            ...cleanedData.customaudience_data.rule,
+            inclusions: {
+              ...cleanedData.customaudience_data.rule.inclusions,
+              rules: cleanedData.customaudience_data.rule.inclusions.rules.map(rule => {
+                // Convert retention_seconds and clean filters in one go
+                let newRule = {
+                  ...rule,
+                  retention_seconds: rule.retention_seconds * 24 * 60 * 60
+                };
+                if (rule.filter && Array.isArray(rule.filter.filters)) {
+                  const cleanedFilters = rule.filter.filters.filter(f => Object.keys(f).length > 0);
+                  newRule = {
+                    ...newRule,
+                    filter: {
+                      ...rule.filter,
+                      filters: cleanedFilters
+                    }
+                  };
+                }
+                return newRule;
+              })
+            }
+          }
+        }
+      };
     }
-    const res = await createAudience(data)
+
+    const res = await createAudience(cleanedData)
     if (res.id) {
       handleSuccessfullState(true)
       handleClose()
+    } else {
+      showDialog('error', 'Ooops', "Failed to create audience, please try again later.", false);
     }
   }
 
   const renderWebsiteVisitorsView = () => (
     <>
+      <StatusDialog
+        open={isDialogOpen}
+        onOpenChange={handleDialogClose}
+        title={dialogState.title}
+        description={dialogState.description}
+        variant={dialogState.variant}
+        showActionButton={dialogState.showActionButton}
+      />
       <DialogHeader className="bg-brand-blue text-white px-4 py-4 flex flex-row items-center">
         <Button
           variant="ghost"
@@ -348,15 +395,15 @@ const CreateAudienceDialog = ({ open, onOpenChange, handleSuccessfullState }: Cr
                 <SelectContent>
                   <SelectItem value='all-visitors'>All website visitors</SelectItem>
                   <SelectItem value='pages-visitors'>People who visited specific web pages</SelectItem>
+                  <SelectItem value="time-visitors">Visitors by time spent</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            {fields.map((field, index) => (
-              <>
 
+            {fields.map((field, index) => (
+              <Fragment key={field.id}>
                 <FormField
-                  key={field.id}
                   control={form.control}
                   name={`customaudience_data.rule.inclusions.rules.${index}.retention_seconds`}
                   render={({ field }) => (
@@ -386,6 +433,32 @@ const CreateAudienceDialog = ({ open, onOpenChange, handleSuccessfullState }: Cr
                     </FormItem>
                   )}
                 />
+                {eventType === 'time-visitors' && <FormField
+                  control={form.control}
+                  name={`customaudience_data.rule.inclusions.rules.${index}.filter.filters.${index + 1}.value`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-medium text-md">Percentile</FormLabel>
+                      <Select onValueChange={(value) => {
+                        field.onChange([value])
+                        form.setValue(`customaudience_data.rule.inclusions.rules.${index}.filter.filters.${index + 1}.field`, '')
+                        form.setValue(`customaudience_data.rule.inclusions.rules.${index}.filter.filters.${index + 1}.operator`, '')
+                      }}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="select an percentage" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="25">25%</SelectItem>
+                          <SelectItem value="10">10%</SelectItem>
+                          <SelectItem value="5">5%</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  )}
+                />}
+                {eventType === 'time-visitors' && <p onClick={() => setEventType('pages-visitors')} className='text-[#1890ff] text-sm cursor-pointer hover:underline decoration-1'>+ Select specific web page(s)</p>}
                 {eventType === 'pages-visitors' && (
                   <section className='bg-[#f5f6f7] p-4 rounded-lg'>
                     <div className='flex gap-4'>
@@ -394,7 +467,7 @@ const CreateAudienceDialog = ({ open, onOpenChange, handleSuccessfullState }: Cr
                         name={`customaudience_data.rule.inclusions.rules.${index}.filter.filters.${index}.field`}
                         render={({ field }) => (
                           <FormItem className='w-3/5'>
-                            <Select onValueChange={field.onChange} defaultValue='url' disabled>
+                            <Select onValueChange={field.onChange} value='url' disabled>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue />
@@ -413,7 +486,10 @@ const CreateAudienceDialog = ({ open, onOpenChange, handleSuccessfullState }: Cr
                         name={`customaudience_data.rule.inclusions.rules.${index}.filter.filters.${index}.operator`}
                         render={({ field }) => (
                           <FormItem className='flex-1'>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={(value) => {
+                              field.onChange(value)
+                              form.setValue(`customaudience_data.rule.inclusions.rules.${index}.filter.filters.${index}.field`, 'url')
+                            }} defaultValue={field.value}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="select an operator" />
@@ -451,7 +527,7 @@ const CreateAudienceDialog = ({ open, onOpenChange, handleSuccessfullState }: Cr
                     </div>
                   </section>
                 )}
-              </>
+              </Fragment>
             ))}
 
 
@@ -475,7 +551,7 @@ const CreateAudienceDialog = ({ open, onOpenChange, handleSuccessfullState }: Cr
               <Button onClick={handleClose} variant="outline">
                 Cancel
               </Button>
-              {/* <Button
+              <Button
                 type="button"
                 variant="secondary"
                 onClick={() => {
@@ -484,7 +560,7 @@ const CreateAudienceDialog = ({ open, onOpenChange, handleSuccessfullState }: Cr
                 }}
               >
                 Log Form Errors
-              </Button> */}
+              </Button>
               <Button
                 type='submit'
                 className="bg-[#ff7a59] hover:bg-[#ff7a59]/90 text-white"
