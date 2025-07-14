@@ -9,8 +9,8 @@ import StatusDialog from '@/components/shared/StatusDialog';
 import { getAdAccounts, AdAccount } from '@/services/adAccountService';
 import { getCampaigns, Campaign, updateCampaignStatus, CampaignsResponse, CampaignStatus } from '@/services/campaignService';
 import { formatCampaignDate } from '@/utils/dateFormatters';
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
-import { Loader, RefreshCcw } from 'lucide-react';
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { ChevronLeft, ChevronRight, Loader, RefreshCcw } from 'lucide-react';
 import { toast } from "@/components/ui/sonner";
 import { dummyCampaignsResponse } from '@/data/dummyCampaigns';
 import GoogleSignInButton from '@/components/ui/GoogleSignInButton';
@@ -18,6 +18,7 @@ import MetaSignInButton from '@/components/ui/MetaSignInButton';
 import { useDialog } from '@/hooks/useDialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import AdsetsTable from '@/components/tables/Adsets';
+import getPageNumbers from '@/utils/getPageNumbers';
 
 const FacebookIcon = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -181,6 +182,11 @@ const Campaigns = () => {
   //   ));
   // };
 
+  const paginationMeta = {
+    page: currentPage,
+    pages: Math.ceil((campaignsData?.count) / 20),
+  }
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -341,7 +347,7 @@ const Campaigns = () => {
               )}
             </div>
 
-            {campaignsData?.results.length > 0 && (
+            {/* {campaignsData?.results.length > 0 && (
               <Pagination>
                 <PaginationContent>
                   <PaginationItem>
@@ -365,6 +371,57 @@ const Campaigns = () => {
                   </PaginationItem>
                 </PaginationContent>
               </Pagination>
+            )} */}
+            {paginationMeta && paginationMeta.pages > 1 && (
+              <div className="mt-6">
+                <Pagination>
+                  <PaginationContent>
+                    {/* Previous Page Button */}
+                    <PaginationItem>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={currentPage === 1}
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        className="flex items-center gap-1"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                        {/* <span>Previous</span> */}
+                      </Button>
+                    </PaginationItem>
+
+                    {/* Page Numbers */}
+                    {getPageNumbers({paginationMeta}).map((pageNum) => (
+                      <PaginationItem key={pageNum} className='cursor-pointer'>
+                        {pageNum === 'ellipsis' ? (
+                          <PaginationEllipsis />
+                        ) : (
+                          <PaginationLink
+                            isActive={currentPage === pageNum}
+                            onClick={() => handlePageChange(pageNum)}
+                          >
+                            {pageNum}
+                          </PaginationLink>
+                        )}
+                      </PaginationItem>
+                    ))}
+
+                    {/* Next Page Button */}
+                    <PaginationItem>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={currentPage === paginationMeta.pages}
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        className="flex items-center gap-1"
+                      >
+                        {/* <span>Next</span> */}
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
             )}
           </TabsContent>
           <TabsContent value="adsets">
