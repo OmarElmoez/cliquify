@@ -98,7 +98,7 @@ const CreateCampaign = () => {
   });
 
   const handleExit = () => {
-    navigate('/');
+    navigate('/dashboard');
   };
 
   const updateCampaignType = (value: "new" | "existing") => {
@@ -266,7 +266,7 @@ const CreateCampaign = () => {
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 bg-[#1A1F2C] text-white px-4 py-2 flex items-center justify-between z-50">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" className="text-white hover:text-white/80" onClick={handleExit}>
+          <Button variant="ghost" size="sm" className="text-white hover:text-black/80" onClick={handleExit}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Exit
           </Button>
@@ -300,7 +300,7 @@ const CreateCampaign = () => {
 
       {/* Main Content */}
       <main className="pt-16 min-h-screen">
-        <div className="flex border-b">
+        {/* <div className="flex border-b">
           <div
             className={`px-6 py-3 cursor-pointer ${activeTab === 'ad' ? 'border-b-2 border-blue-600' : ''}`}
             onClick={() => setActiveTab('ad')}
@@ -319,7 +319,7 @@ const CreateCampaign = () => {
           >
             Budget & Schedule
           </div>
-        </div>
+        </div> */}
 
         <div className="container mx-auto px-6 py-8">
           {/* Step Indicator */}

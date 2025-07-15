@@ -36,11 +36,11 @@ export const BudgetScheduling = ({
   const [budgetType, setBudgetType] = useState<'daily' | 'lifetime'>();
   const [startData, setStartData] = useState({
     date: "",
-    time: ""
+    time: "00:00"
   });
   const [endData, setEndData] = useState({
     date: "",
-    time: ""
+    time: "00:00"
   });
 
   useEffect(() => {
