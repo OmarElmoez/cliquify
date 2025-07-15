@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { ChevronDown, X } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge"
-import useOutsideClick from "@/hooks/useOutSideClick";
+import useOutsideClick from "@/hooks/useOutsideClick";
 
 type TSelectValue = string | number;
 
