@@ -4,10 +4,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import getAdsets, { Adset } from '@/services/adsets';
-import { MultiSelect, MultiSelectOption } from "@/components/ui/multi-select";
+import MultiSelect from "@/components/shared/MultiSelect"
 import countries from '@/data/countries';
 import { CampaignData } from '@/schemas/campaignSchema';
-import { Control, useWatch } from 'react-hook-form';
+import { Control, UseFormSetValue, useWatch } from 'react-hook-form';
 import {
   FormControl,
   FormDescription,
@@ -31,6 +31,7 @@ interface TargetingSetupProps {
   campaignType: string;
   updateAdsetType: (value: 'new' | 'existing') => void;
   adsetType: string;
+  setValue: UseFormSetValue<CampaignData>
 }
 
 // Age options for dropdowns
@@ -44,7 +45,8 @@ export const TargetingSetup: React.FC<TargetingSetupProps> = ({
   selectedObjective,
   campaignType,
   updateAdsetType,
-  adsetType
+  adsetType,
+  setValue
 }) => {
 
   const [adsets, setAdsets] = useState<Adset[]>([]);
@@ -92,12 +94,15 @@ export const TargetingSetup: React.FC<TargetingSetupProps> = ({
             className="flex flex-col space-y-4"
           >
             <div className="flex items-center space-x-8">
-              {campaignType !== 'new' && <div className="flex justify-center items-center space-x-2">
+              {campaignType !== 'new' && 
+              <div
+                className="flex justify-center items-center space-x-2"
+                >
                 <RadioGroupItem value="existing" id="existing" className="mt-1" />
                 <Label htmlFor="existing" className="font-medium">Use a saved adset</Label>
               </div>}
 
-              <div className="flex justify-center items-center space-x-2">
+              <div className="flex justify-center items-center space-x-2" onClick={() => setValue('adset_id', '')}>
                 <RadioGroupItem value="new" id="new" className="mt-1" />
                 <Label htmlFor="new" className="font-medium">Create a new adset</Label>
               </div>
@@ -268,6 +273,7 @@ export const TargetingSetup: React.FC<TargetingSetupProps> = ({
                       <FormControl>
                         <Input
                           type="number"
+                          min={0}
                           placeholder="Enter bid amount"
                           {...field}
                         />
@@ -286,11 +292,10 @@ export const TargetingSetup: React.FC<TargetingSetupProps> = ({
                       <FormLabel>Location</FormLabel>
                       <FormControl>
                         <MultiSelect
-                          placeholder="Select locations..."
-                          options={countries.map(location => ({ value: location.value, label: location.label }))}
-                          value={field.value || []}
-                          onChange={field.onChange}
-                        />
+                          placeholder='Select a location'
+                          choices={countries}
+                          value={field.value}
+                          onChange={field.onChange} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -367,11 +372,11 @@ export const TargetingSetup: React.FC<TargetingSetupProps> = ({
                       <FormControl>
                         <MultiSelect
                           placeholder="Select genders..."
-                          options={[
+                          choices={[
                             { value: 1, label: 'Male' },
                             { value: 2, label: 'Female' }
                           ]}
-                          value={field.value || []}
+                          value={field.value}
                           onChange={field.onChange}
                         />
                       </FormControl>

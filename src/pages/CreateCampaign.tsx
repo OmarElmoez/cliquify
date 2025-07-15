@@ -39,7 +39,8 @@ const CreateCampaign = () => {
     mode: 'onChange',
     defaultValues: {
       account_id: '',
-      campaign_id: "",
+      campaign_id: '',
+      adset_id: '',
       page_id: '',
       creative_id: '',
       image_hash: '',
@@ -59,8 +60,8 @@ const CreateCampaign = () => {
         billing_event: '',
         bid_amount: '',
         bid_strategy: '',
-        lifetime_budget: 0,
-        daily_budget: 0,
+        lifetime_budget: '',
+        daily_budget: '',
         targeting: {
           age_min: 18,
           age_max: 65,
@@ -169,50 +170,50 @@ const CreateCampaign = () => {
       const payload = { ...data };
 
       // Campaign logic: if one exists, remove the other
-      if (data.campaign_id) {
+      if (payload.campaign_id) {
         delete payload.campaign_data;
-      } else if (data.campaign_data && Object.keys(data.campaign_data).length > 0) {
+      } else if (payload.campaign_data && Object.keys(payload.campaign_data).length > 0) {
         delete payload.campaign_id;
       }
 
       // Adset logic: if one exists, remove the other
-      if (data.adset_id) {
+      if (payload.adset_id) {
         delete payload.adset_data;
-      } else if (data.adset_data && Object.keys(data.adset_data).length > 0) {
+      } else if (payload.adset_data && Object.keys(payload.adset_data).length > 0) {
         delete payload.adset_id;
       }
 
       // Creative logic: if one exists, remove the other
-      if (data.creative_id) {
+      if (payload.creative_id) {
         delete payload.creative_data;
-      } else if (data.creative_data && Object.keys(data.creative_data).length > 0) {
+      } else if (payload.creative_data && Object.keys(payload.creative_data).length > 0) {
         delete payload.creative_id;
       }
 
-      if (data?.adset_data?.bid_strategy === "LOWEST_COST_WITHOUT_CAP") {
+      if (payload.adset_data && payload.adset_data.bid_strategy === "LOWEST_COST_WITHOUT_CAP") {
         delete payload.adset_data.bid_amount
       }
 
-      if (data?.adset_data?.daily_budget && data?.adset_data?.end_time === ', ') {
+      if (payload?.adset_data?.daily_budget && payload?.adset_data?.end_time === ', ') {
         delete payload.adset_data.end_time
       }
 
-      if (data?.adset_data?.daily_budget && data?.adset_data?.start_time === ', ') {
+      if (payload?.adset_data?.daily_budget && payload?.adset_data?.start_time === ', ') {
         delete payload.adset_data.start_time
       }
 
-      if (data?.adset_data?.lifetime_budget && data?.adset_data?.start_time === ', ') {
+      if (payload?.adset_data?.lifetime_budget && payload?.adset_data?.start_time === ', ') {
         delete payload.adset_data.start_time
       }
 
-      if (data?.adset_data?.daily_budget) {
+      if (payload?.adset_data?.daily_budget) {
         delete payload.adset_data.lifetime_budget
-      } else if (data?.adset_data?.lifetime_budget) {
+      } else if (payload?.adset_data?.lifetime_budget) {
         delete payload.adset_data.daily_budget
       }
 
 
-      if (data?.adset_data?.lifetime_budget && data?.adset_data?.end_time === ', ') {
+      if (payload?.adset_data?.lifetime_budget && payload?.adset_data?.end_time === ', ') {
         console.log('no end data provided');
         showDialog('error', 'End Time not found', 'you should provide end time & date with lifetime budget.', false);
         return;
@@ -289,7 +290,7 @@ const CreateCampaign = () => {
         </div>
         <div className="flex items-center gap-2">
           <h1 className="text-sm font-medium">
-            {campaign.campaign_data?.name} - {new Date().toLocaleDateString()} {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            {new Date().toLocaleDateString([], {dateStyle: 'full'})} - {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </h1>
           {/* <Button variant="ghost" size="sm" className="text-white hover:text-white/80" onClick={handlePublish}>
             Publish
@@ -299,7 +300,7 @@ const CreateCampaign = () => {
 
       {/* Main Content */}
       <main className="pt-16 min-h-screen">
-        {/* <div className="flex border-b">
+        <div className="flex border-b">
           <div
             className={`px-6 py-3 cursor-pointer ${activeTab === 'ad' ? 'border-b-2 border-blue-600' : ''}`}
             onClick={() => setActiveTab('ad')}
@@ -318,7 +319,7 @@ const CreateCampaign = () => {
           >
             Budget & Schedule
           </div>
-        </div> */}
+        </div>
 
         <div className="container mx-auto px-6 py-8">
           {/* Step Indicator */}
@@ -385,6 +386,7 @@ const CreateCampaign = () => {
                   campaignType={campaignType}
                   updateAdsetType={updateAdsetType}
                   adsetType={adsetType}
+                  setValue={form.setValue}
                 />
               )}
 

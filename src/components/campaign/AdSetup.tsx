@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronRight, Upload } from 'lucide-react';
+import { ChevronRight, Upload, X } from 'lucide-react';
 import { AdAccount, getAdAccounts } from '@/services/adAccountService';
 import { getPages, Page } from '@/services/pages';
 import { toast } from 'sonner';
@@ -24,8 +24,9 @@ import { Button } from '../ui/button';
 import OBJECTIVES from '@/data/objectives';
 import getImageHashKey from '@/services/getImageHashKey';
 import getCreativeAds, { CreativeAd } from '@/services/creativeAds';
-import { MultiSelect } from "@/components/ui/multi-select";
+import MultiSelect from "@/components/shared/MultiSelect"
 import { Checkbox } from '../ui/checkbox';
+import { cn } from '@/lib/utils';
 
 
 
@@ -44,14 +45,20 @@ interface AdSetupProps {
   updateCampaignType: (value: string) => void
 }
 
+type TUploadedImg = {
+  img: File,
+  imgUrl: string
+}
+
+const formatFileSize = (bytes: number) => {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
+};
+
 export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, campaignType, updateCampaignType, setValue }: AdSetupProps) => {
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const res = await getImageHashKey(e.target.files[0])
-      updateCampaign({ image_hash: res.image_hash.hash });
-      setValue('image_hash', res.image_hash.hash)
-    }
-  };
 
   const [adAccounts, setAdAccounts] = useState<AdAccount[]>([]);
   const [pages, setPages] = useState<Page[]>([]);
@@ -60,6 +67,28 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
   const [adCreativeType, setAdCreativeType] = useState<'existing' | 'new'>('new');
   const [selectedAdAccount, setSelectedAdAccount] = useState<string>('');
   const [creativeAds, setCreativeAds] = useState<CreativeAd[]>([])
+  const [isImgLoading, setIsImgLoading] = useState(false)
+  const [uploadedImg, setUploadedImg] = useState<TUploadedImg>()
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0]
+      setIsImgLoading(true)
+      try {
+        const res = await getImageHashKey(file)
+        setUploadedImg(({
+          img: file,
+          imgUrl: URL.createObjectURL(file)
+        }))
+        setIsImgLoading(false)
+        updateCampaign({ image_hash: res.image_hash.hash });
+        setValue('image_hash', res.image_hash.hash)
+      } catch (error) {
+        toast('failed to uplaod image')
+        setIsImgLoading(false)
+      }
+    }
+  };
 
   useEffect(() => {
     const fetchAdAccounts = async () => {
@@ -98,8 +127,6 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
   }, []);
 
   useEffect(() => {
-
-
 
     const fetchCampaigns = async () => {
       try {
@@ -252,7 +279,7 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
               onValueChange={(value: 'new' | 'existing') => updateCampaignType(value)}
               className="flex gap-4"
             >
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2" onClick={() => setValue('campaign_id', '')}>
                 <RadioGroupItem value="new" id="new-campaign" />
                 <Label htmlFor="new-campaign">Create new campaign</Label>
               </div>
@@ -407,42 +434,19 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
                     </FormItem>
                   )}
                 /> */}
-                <FormField
+                {campaign.campaign_data?.objective && <FormField
                   control={control}
                   name="campaign_data.special_ad_categories"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Special Ad Categories</FormLabel>
                       <FormControl>
-                        <div className="flex flex-col gap-2">
-                          {(adCategoriesOptions(campaign.campaign_data?.objective)).map(option => (
-                            <div key={option.value} className="flex items-center space-x-2">
-                              <Checkbox
-                                id={`special-ad-category-${option.value}`}
-                                checked={Array.isArray(field.value) ? field.value.includes(option.value) : false}
-                                onCheckedChange={checked => {
-                                  let newValue: string[] = Array.isArray(field.value) ? [...field.value] : [];
-                                  if (checked) {
-                                    if (!newValue.includes(option.value)) {
-                                      newValue.push(option.value);
-                                    }
-                                  } else {
-                                    newValue = newValue.filter(v => v !== option.value);
-                                  }
-                                  field.onChange(newValue);
-                                }}
-                              />
-                              <label htmlFor={`special-ad-category-${option.value}`} className="text-sm">
-                                {option.label}
-                              </label>
-                            </div>
-                          ))}
-                        </div>
+                        <MultiSelect onChange={field.onChange} value={field.value} choices={(adCategoriesOptions(campaign.campaign_data?.objective))} placeholder='select ad categories' />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
-                />
+                />}
               </div>
             )}
 
@@ -490,7 +494,7 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
             onValueChange={(value: 'existing' | 'new') => setAdCreativeType(value)}
             className="flex gap-4"
           >
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2" onClick={() => setValue('creative_id', '')}>
               <RadioGroupItem value="new" id="create-new" />
               <Label htmlFor="create-new">Create new ad</Label>
             </div>
@@ -569,28 +573,68 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
               {/* Image Upload */}
               <div>
                 <Label>Upload Image</Label>
-                <div className="mt-2 flex items-center justify-center w-full">
-                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                {!uploadedImg && <div className="mt-2 flex items-center justify-center w-full">
+                  <label className={cn("flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100",
+                    isImgLoading && 'cursor-not-allowed'
+                  )}>
                     <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                      <Upload className="w-8 h-8 mb-2 text-gray-500" />
-                      <p className="mb-2 text-sm text-gray-500">
-                        <span className="font-semibold">Click to upload</span> or drag and drop
-                      </p>
-                      <p className="text-xs text-gray-500">PNG, JPG (MAX. 800x800px)</p>
+                      {isImgLoading ? (
+                        <div className="flex flex-col items-center">
+                          <svg className="animate-spin h-8 w-8 text-gray-500 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                          </svg>
+                          <p className="text-sm text-gray-500">Uploading...</p>
+                        </div>
+                      ) : (
+                        <>
+                          <Upload className="w-8 h-8 mb-2 text-gray-500" />
+                          <p className="mb-2 text-sm text-gray-500">
+                            <span className="font-semibold">Click to upload</span> or drag and drop
+                          </p>
+                          <p className="text-xs text-gray-500">PNG, JPG (MAX. 800x800px)</p>
+                          <input
+                            id="dropzone-file"
+                            type="file"
+                            className="hidden"
+                            accept="image/*"
+                            onChange={handleImageUpload}
+                          />
+                        </>
+                      )}
                     </div>
-                    <input
-                      id="dropzone-file"
-                      type="file"
-                      className="hidden"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                    />
                   </label>
-                </div>
-                {campaign.image_hash && (
-                  <p className="mt-2 text-sm text-gray-500">
-                    Selected file: {campaign.image_hash}
-                  </p>
+                </div>}
+                {uploadedImg && (
+                  <div className="flex items-center gap-6 p-4 bg-gray-50 rounded-lg shadow-sm mt-4 max-w-xl relative">
+                    <Button className='cursor-pointer absolute right-4 top-4 bg-transparent' onClick={() => {
+                      setUploadedImg(undefined)
+                      setValue('image_hash', '')
+                    }}>
+                      <X size={18} className='text-red-500' />
+                    </Button>
+                    {/* Image Preview */}
+                    <div className="flex-shrink-0">
+                      <img
+                        src={uploadedImg.imgUrl}
+                        alt={uploadedImg.img.name}
+                        className="w-32 h-32 object-cover rounded-md border"
+                      />
+                    </div>
+                    {/* Image Details */}
+                    <div className="flex flex-col justify-center">
+                      <div className="text-sm text-gray-700 font-medium mb-2">File Details</div>
+                      <div className="text-base text-gray-900 mb-1">
+                        <span className="font-semibold">Name:</span> {uploadedImg.img.name}
+                      </div>
+                      <div className="text-base text-gray-900 mb-1">
+                        <span className="font-semibold">Size:</span> {formatFileSize(uploadedImg.img.size)}
+                      </div>
+                      <div className="text-base text-gray-900">
+                        <span className="font-semibold">Type:</span> {uploadedImg.img.type}
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
 

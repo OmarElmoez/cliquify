@@ -23,8 +23,8 @@ export const campaignDataSchema = z.object({
     billing_event: z.string().optional(),
     bid_amount: z.string().optional(),
     bid_strategy: z.string().optional(),
-    lifetime_budget: z.number().optional(),
-    daily_budget: z.number().optional(),
+    lifetime_budget: z.union([z.number(), z.string()]).optional(),
+    daily_budget: z.union([z.number(), z.string()]).optional(),
     targeting: z.object({
       age_min: z.number().optional(),
       age_max: z.number().optional(),

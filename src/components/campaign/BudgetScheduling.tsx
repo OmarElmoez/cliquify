@@ -95,35 +95,37 @@ export const BudgetScheduling = ({
               {budgetType && (
                 <FormField
                   control={control}
+                  key={budgetType}
                   name={budgetType === 'lifetime' ? 'adset_data.lifetime_budget' : 'adset_data.daily_budget'}
                   render={({ field }) => (
                     <FormControl>
                       <Input
                         type="number"
                         placeholder="0.00"
+                        min={0}
                         className="w-[180px]"
                         {...field}
                         onChange={(e) => {
                           const value = parseFloat(e.target.value);
                           field.onChange(value);
                           // Update both daily and lifetime budget based on selected type
-                          if (budgetType === 'lifetime') {
-                            updateCampaign({
-                              adset_data: {
-                                ...campaign.adset_data,
-                                lifetime_budget: value,
-                                daily_budget: undefined
-                              }
-                            });
-                          } else {
-                            updateCampaign({
-                              adset_data: {
-                                ...campaign.adset_data,
-                                daily_budget: value,
-                                lifetime_budget: undefined
-                              }
-                            });
-                          }
+                          // if (budgetType === 'lifetime') {
+                          //   updateCampaign({
+                          //     adset_data: {
+                          //       ...campaign.adset_data,
+                          //       lifetime_budget: value,
+                          //       daily_budget: undefined
+                          //     }
+                          //   });
+                          // } else {
+                          //   updateCampaign({
+                          //     adset_data: {
+                          //       ...campaign.adset_data,
+                          //       daily_budget: value,
+                          //       lifetime_budget: undefined
+                          //     }
+                          //   });
+                          // }
                         }}
                       />
                     </FormControl>
