@@ -166,7 +166,7 @@ const Campaigns = () => {
         // Refetch campaigns to get the latest data
         loadCampaigns(currentPage);
 
-        showDialog('success', 'Status Updated', response.message, false);
+        showDialog('success', 'Status Updated', response.message, true);
       }
     } catch (error) {
       console.error('Error updating campaign status:', error);
