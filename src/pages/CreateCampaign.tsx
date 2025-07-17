@@ -19,11 +19,12 @@ import { toast } from 'sonner';
 import createCampaign from '@/services/createCampaign';
 import { useDialog } from '@/hooks/useDialog';
 import StatusDialog from '@/components/shared/StatusDialog';
-
+import { validateStep } from '@/utils/validateStep';
+export type StepType = 'ad' | 'targeting' | 'budget';
 const CreateCampaign = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState<'adType' | 'setup'>('adType');
-  const [activeTab, setActiveTab] = useState('ad');
+  const [activeTab, setActiveTab] = useState<StepType>('ad');
   const [campaign, setCampaign] = useState<CampaignData>();
   const [campaignType, setCampaignType] = useState<'new' | 'existing'>('new');
   const [adsetType, setAdsetType] = useState<'new' | 'existing'>('new');
@@ -46,14 +47,14 @@ const CreateCampaign = () => {
       image_hash: '',
       campaign_data: {
         name: '',
-        status: '',
+        status: 'PAUSED',
         objective: '',
-        buying_type: '',
+        buying_type: 'AUCTION',
         special_ad_categories: [],
       },
       adset_data: {
         name: '',
-        status: '',
+        status: 'PAUSED',
         start_time: '',
         end_time: '',
         optimization_goal: '',
@@ -92,7 +93,7 @@ const CreateCampaign = () => {
       },
       ad_data: {
         name: '',
-        status: '',
+        status: 'PAUSED',
       },
     },
   });
@@ -119,9 +120,13 @@ const CreateCampaign = () => {
 
   // Step validation functions
   const validateCurrentStep = async (): Promise<boolean> => {
-    const stepFields = getStepFields(activeTab);
-    const isValid = await form.trigger(stepFields as any);
-    return isValid;
+    await form.trigger(['ad_data.name', 'ad_data.status', 'account_id', 'page_id']);
+    const validationResult = validateStep(activeTab, () => form.getValues());
+    if (!validationResult.valid) {
+      showDialog('error', 'Absent Fields', validationResult.error, true)
+      return false;
+    }
+    return true;
   };
 
   const handleNextStep = async () => {
@@ -210,13 +215,6 @@ const CreateCampaign = () => {
         delete payload.adset_data.lifetime_budget
       } else if (payload?.adset_data?.lifetime_budget) {
         delete payload.adset_data.daily_budget
-      }
-
-
-      if (payload?.adset_data?.lifetime_budget && payload?.adset_data?.end_time === ', ') {
-        console.log('no end data provided');
-        showDialog('error', 'End Time not found', 'you should provide end time & date with lifetime budget.', false);
-        return;
       }
 
       const response = await createCampaign(payload);

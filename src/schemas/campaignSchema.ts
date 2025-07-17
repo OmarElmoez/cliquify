@@ -52,27 +52,13 @@ export const campaignDataSchema = z.object({
         }),
       }),
     }),
-  })
-  .optional()
-  .refine(
-    (val, ctx) => {
-      // If creative_id is not present, creative_data must be present (not undefined)
-      const parent = ctx?.parent;
-      if (parent && !parent.creative_id && !val) {
-        return false;
-      }
-      return true;
-    },
-    {
-      message: "Creative data is required if no creative_id is provided",
-      path: ['creative_data'], // applies to creative_data
-    }
-  ),
+  }),
   ad_data: z.object({
     name: z.string().min(1, "Ad name is required").max(100, "Ad name must be less than 100 characters"),
-    status: z.string().min(1, "Status is required"),
+    status: z.string().optional(),
   }),
 })
+
 export type CampaignData = z.infer<typeof campaignDataSchema>;
 
 

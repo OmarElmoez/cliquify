@@ -526,7 +526,7 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
         </div>
 
         <div className="space-y-4 pt-4 border-t">
-          <h3 className="text-lg font-semibold">Ad Creative</h3>
+            <h3 className="text-lg font-semibold">Ad Creative</h3>
 
           <div className="space-y-2">
             <RadioGroup
@@ -539,14 +539,6 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
                   <RadioGroupItem value="new" id="create-new" />
                   <Label htmlFor="create-new">Create new ad</Label>
                 </div>
-                {/* Show error if no creative_id and creative_data is missing (schema error) */}
-                {adCreativeType === 'new' && control._formState?.errors?.creative_data && (
-                  <span className="text-sm text-red-500 mt-1">
-                    {typeof control._formState.errors.creative_data.message === 'string'
-                      ? control._formState.errors.creative_data.message
-                      : "Creative data is required if no creative_id is provided"}
-                  </span>
-                )}
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="existing" id="existing-post" />
