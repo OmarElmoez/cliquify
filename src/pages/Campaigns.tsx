@@ -170,7 +170,7 @@ const Campaigns = () => {
       }
     } catch (error) {
       console.error('Error updating campaign status:', error);
-      showDialog('error', 'Status Update Failed', 'Failed to update campaign status. Please try again later.', false);
+      showDialog('error', 'Status Update Failed', 'Failed to update campaign status. Please try again later.', true);
     } finally {
       setStatusLoading(null);
     }
