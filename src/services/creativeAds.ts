@@ -2,14 +2,18 @@ import axiosInstance from "@/lib/axios"
 
 
 export type CreativeAd = {
-  creative__creative_id: string;
-  creative__name: string;
+  creative_id: string;
+  name: string;
   // there are more fields, but we just get what we need
 };
 
-const getCreativeAds = async (): Promise<CreativeAd[]> => {
+export type TGetCreativeAdsResponse = {
+  response: CreativeAd[]
+}
+
+const getCreativeAds = async ({account_id}: {account_id: string}): Promise<TGetCreativeAdsResponse> => {
   try {
-    const res = await axiosInstance.get<CreativeAd[]>(`/adcreative/list/`);
+    const res = await axiosInstance.get<TGetCreativeAdsResponse>(`/adcreative/list/?account_id=${account_id}`);
     return res.data;
   } catch (error) {
     throw error('faild to fetch createive ads: ', error)

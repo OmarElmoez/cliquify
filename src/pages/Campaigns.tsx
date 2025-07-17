@@ -19,6 +19,7 @@ import { useDialog } from '@/hooks/useDialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import AdsetsTable from '@/components/tables/Adsets';
 import getPageNumbers from '@/utils/getPageNumbers';
+import AdsTable from '@/components/tables/ads';
 
 const FacebookIcon = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -33,7 +34,7 @@ const Campaigns = () => {
   const [selectedAccount, setSelectedAccount] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [statusLoading, setStatusLoading] = useState<string | null>(null); // Store the campaign ID that's being updated
-  const [error, setError] = useState<string | null>(null);
+  const [isError, setIsError] = useState(false);
   const {
     isDialogOpen,
     dialogState,
@@ -43,6 +44,7 @@ const Campaigns = () => {
   const [campaignsData, setCampaignsData] = useState<CampaignsResponse>();
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [selectedCampaignId, setSelectedCampaignId] = useState("");
+  const [selectedAdset, setSelectedAdset] = useState('');
   const [activeTab, setActiveTab] = useState("campaigns");
   // const [pagination, setPagination] = useState<{
   //   next: string | null;
@@ -77,18 +79,18 @@ const Campaigns = () => {
   const loadAdAccounts = async () => {
     try {
       setLoading(true);
-      setError(null);
+      setIsError(false);
       setShowRetryAction({ visible: false, type: 'accounts' });
-      const accounts = await getAdAccounts();
-      setAdAccounts(accounts.data);
-      if (accounts.data.length > 0) {
-        setSelectedAccount(accounts.data[0].id);
+      const res = await getAdAccounts();
+      if (typeof res === 'string') {
+        showDialog('error', 'An Error Occurred', res, true)
+      }
+      setAdAccounts(res.data);
+      if (res.data.length > 0) {
+        setSelectedAccount(res.data[0].id);
       }
     } catch (error) {
-      const errorMessage = 'Failed to load ad accounts. Please try again later.';
-      setError(errorMessage);
-      showDialog('error', 'Error', errorMessage, false);
-
+      setIsError(true);
       // Show retry action after 1 second
       setTimeout(() => {
         setShowRetryAction({ visible: true, type: 'accounts' });
@@ -103,15 +105,13 @@ const Campaigns = () => {
   const loadCampaigns = async (page: number) => {
     try {
       setLoading(true);
-      setError(null);
+      setIsError(false);
       setShowRetryAction({ visible: false, type: 'campaigns' });
 
       const response = await getCampaigns({ account_id: selectedAccount, page });
       setCampaignsData(response);
     } catch (error) {
-      const errorMessage = 'Failed to load campaigns. Please try again later.';
-      setError(errorMessage);
-      showDialog('error', 'Error', errorMessage, false);
+      setIsError(true);
 
       // Show retry action after 1 second
       setTimeout(() => {
@@ -221,15 +221,15 @@ const Campaigns = () => {
                   <SelectValue placeholder={loading ? "Loading accounts..." : "Select account"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {adAccounts.length > 0 ? (
-                    adAccounts.map((account) => (
+                  {adAccounts?.length > 0 ? (
+                    adAccounts?.map((account) => (
                       <SelectItem key={account.id} value={account.id}>
                         {account.name}
                       </SelectItem>
                     ))
                   ) : (
                     <SelectItem value="no-accounts" disabled>
-                      {error ? "Failed to load accounts" : "No accounts available"}
+                      {isError ? "Failed to load accounts" : "No accounts available"}
                     </SelectItem>
                   )}
                 </SelectContent>
@@ -276,10 +276,16 @@ const Campaigns = () => {
         )} */}
 
         <Tabs value={activeTab}>
-          <TabsList className='w-[240px] justify-start gap-16'>
+          <TabsList className='w-[350px] justify-start gap-16'>
             <TabsTrigger value="campaigns" onClick={() => setActiveTab('campaigns')}>Campaigns</TabsTrigger>
-            <TabsTrigger value="adsets" onClick={() => setActiveTab('adsets')}>Ad sets</TabsTrigger>
-            {/* <TabsTrigger value="ads" onClick={() => setActiveTab('ads')}>Ads</TabsTrigger> */}
+            <TabsTrigger value="adsets" onClick={() => {
+              setActiveTab('adsets')
+              setSelectedCampaignId('')
+            }}>Ad sets</TabsTrigger>
+            <TabsTrigger value="ads" onClick={() => {
+              setActiveTab('ads')
+              setSelectedAdset('')
+            }}>Ads</TabsTrigger>
           </TabsList>
           <TabsContent value="campaigns">
             <div className="border rounded-md overflow-hidden">
@@ -298,14 +304,14 @@ const Campaigns = () => {
                   </TableHeader>
                   <TableBody>
                     {campaignsData?.results.map(campaign => (
-                      <TableRow key={campaign.id}>
+                      <TableRow key={campaign.campaign_id}>
                         <TableCell className="py-4 px-4">
                           <div className="flex items-center gap-2">
                             <FacebookIcon />
                             <div
                               className='cursor-pointer hover:underline hover:text-[#1890ff] decoration-1'
                               onClick={() => {
-                                setSelectedCampaignId(campaign.id);
+                                setSelectedCampaignId(campaign.campaign_id);
                                 setActiveTab("adsets");
                               }}
                             >
@@ -315,7 +321,7 @@ const Campaigns = () => {
                         </TableCell>
                         <TableCell className="py-4 px-4">
                           <div className="flex items-center gap-2">
-                            {statusLoading === campaign.id ? (
+                            {statusLoading === campaign.campaign_id ? (
                               <div className="w-10 h-5 flex items-center justify-center">
                                 <Loader className="h-4 w-4 animate-spin" />
                               </div>
@@ -324,7 +330,7 @@ const Campaigns = () => {
                                 checked={campaign.status === "ACTIVE"}
                                 onCheckedChange={(checked) =>
                                   handleStatusToggle(
-                                    campaign.id,
+                                    campaign.campaign_id,
                                     checked ? "ACTIVE" : "PAUSED"
                                   )
                                 }
@@ -425,9 +431,11 @@ const Campaigns = () => {
             )}
           </TabsContent>
           <TabsContent value="adsets">
-            <AdsetsTable campaign_id={selectedCampaignId} />
+            <AdsetsTable id={selectedCampaignId || selectedAccount} getFor={selectedCampaignId ? 'campaign' : 'account'} setActiveTab={setActiveTab} setSelectedAdset={setSelectedAdset} />
           </TabsContent>
-          {/* <TabsContent value="ads">Ads</TabsContent> */}
+          <TabsContent value="ads">
+            <AdsTable id={selectedAdset || selectedAccount} getFor={selectedAdset ? 'adset' : 'account'} />
+          </TabsContent>
         </Tabs>
 
 

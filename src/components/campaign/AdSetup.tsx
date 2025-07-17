@@ -23,7 +23,7 @@ import {
 import { Button } from '../ui/button';
 import OBJECTIVES from '@/data/objectives';
 import getImageHashKey from '@/services/getImageHashKey';
-import getCreativeAds, { CreativeAd } from '@/services/creativeAds';
+import getCreativeAds, { CreativeAd, TGetCreativeAdsResponse } from '@/services/creativeAds';
 import MultiSelect from "@/components/shared/MultiSelect"
 import { Checkbox } from '../ui/checkbox';
 import { cn } from '@/lib/utils';
@@ -66,7 +66,7 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
   // const [campaignType, setCampaignType] = useState<'new' | 'existing'>('new');
   const [adCreativeType, setAdCreativeType] = useState<'existing' | 'new'>('new');
   const [selectedAdAccount, setSelectedAdAccount] = useState<string>('');
-  const [creativeAds, setCreativeAds] = useState<CreativeAd[]>([])
+  const [creativeAds, setCreativeAds] = useState<TGetCreativeAdsResponse>()
   const [isImgLoading, setIsImgLoading] = useState(false)
   const [uploadedImg, setUploadedImg] = useState<TUploadedImg>()
 
@@ -101,16 +101,6 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
       }
     };
 
-    const fetchcreativeAds = async () => {
-      try {
-        const res = await getCreativeAds();
-        setCreativeAds(res);
-      } catch (error) {
-        console.error('Error fetching creative ads:', error);
-        toast.error('Error fetching creative ads');
-      }
-    };
-
     const fetchPages = async () => {
       try {
         const response = await getPages();
@@ -122,7 +112,6 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
     };
 
     fetchAdAccounts();
-    fetchcreativeAds();
     fetchPages();
   }, []);
 
@@ -138,13 +127,24 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
       }
     };
 
+    const fetchcreativeAds = async () => {
+      try {
+        const res = await getCreativeAds({ account_id: selectedAdAccount });
+        setCreativeAds(res);
+      } catch (error) {
+        console.error('Error fetching creative ads:', error);
+        toast.error('Error fetching creative ads');
+      }
+    };
+
     if (selectedAdAccount) {
       fetchCampaigns();
+      fetchcreativeAds();
     }
   }, [selectedAdAccount]);
 
   const getCampaignObjective = (campaingId: string) => {
-    const { objective } = campaigns.find(campaign => campaign.id === campaingId);
+    const { objective } = campaigns?.find(campaign => campaign.campaign_id === campaingId);
     updateCampaign({ campaign_data: { ...campaign.campaign_data, objective } })
   }
 
@@ -451,35 +451,47 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
             )}
 
             {campaignType === 'existing' && (
-              <div className="mt-2 pl-6">
-                <FormField
-                  control={control}
-                  name="campaign_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <Select onValueChange={(value) => {
-                        field.onChange(value);
-                        updateCampaign({ campaign_id: value })
-                        getCampaignObjective(value)
-                      }} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select existing campaign" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {campaigns.map(camp => (
-                            <SelectItem key={camp.id} value={camp.id}>
-                              {camp.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              campaigns?.length > 0 ? (
+                <div className="mt-2 pl-6">
+                  <FormField
+                    control={control}
+                    name="campaign_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <Select onValueChange={(value) => {
+                          field.onChange(value);
+                          updateCampaign({ campaign_id: value })
+                          getCampaignObjective(value)
+                        }} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select existing campaign" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {campaigns?.map(camp => (
+                              <SelectItem key={camp.campaign_id} value={camp.campaign_id}>
+                                {camp.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              ) : (
+                <div className="mt-4 pl-6">
+                  <div className="flex items-center gap-2 bg-yellow-50 border border-yellow-200 rounded-md px-4 py-3 text-yellow-800 text-sm">
+                    <svg className="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01" />
+                    </svg>
+                    <span>No campaigns avaliable for this account.</span>
+                  </div>
+                </div>
+              )
             )}
           </div>
         </div>
@@ -504,7 +516,7 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
             </div>
           </RadioGroup>
 
-          {adCreativeType === 'existing' && (
+          {adCreativeType === 'existing' && creativeAds?.response && creativeAds.response.length > 0 && (
             <div className="mt-4 pl-6">
               <FormField
                 control={control}
@@ -518,9 +530,9 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {creativeAds?.map(post => (
-                          <SelectItem key={post.creative__creative_id} value={post.creative__creative_id}>
-                            {post.creative__name}
+                        {creativeAds.response.map(post => (
+                          <SelectItem key={post.creative_id} value={post.creative_id}>
+                            {post.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -529,6 +541,17 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
                   </FormItem>
                 )}
               />
+            </div>
+          )}
+          {adCreativeType === 'existing' && (!creativeAds?.response || creativeAds.response.length === 0) && (
+            <div className="mt-4 pl-6">
+              <div className="flex items-center gap-2 bg-yellow-50 border border-yellow-200 rounded-md px-4 py-3 text-yellow-800 text-sm">
+                <svg className="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01" />
+                </svg>
+                <span>No existing ads found for this account.</span>
+              </div>
             </div>
           )}
 

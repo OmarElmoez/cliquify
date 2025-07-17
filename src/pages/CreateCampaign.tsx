@@ -194,15 +194,15 @@ const CreateCampaign = () => {
         delete payload.adset_data.bid_amount
       }
 
-      if (payload?.adset_data?.daily_budget && payload?.adset_data?.end_time === ', ') {
+      if (payload?.adset_data?.daily_budget && payload?.adset_data?.end_time === '') {
         delete payload.adset_data.end_time
       }
 
-      if (payload?.adset_data?.daily_budget && payload?.adset_data?.start_time === ', ') {
+      if (payload?.adset_data?.daily_budget && payload?.adset_data?.start_time === '') {
         delete payload.adset_data.start_time
       }
 
-      if (payload?.adset_data?.lifetime_budget && payload?.adset_data?.start_time === ', ') {
+      if (payload?.adset_data?.lifetime_budget && payload?.adset_data?.start_time === '') {
         delete payload.adset_data.start_time
       }
 
@@ -220,6 +220,9 @@ const CreateCampaign = () => {
       }
 
       const response = await createCampaign(payload);
+      if (typeof response === 'string') {
+        showDialog('error', 'Unexpected Error', response, true)
+      }
       if (response.campaign_id) {
         navigate('/dashboard');
       }

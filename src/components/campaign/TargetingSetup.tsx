@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import getAdsets, { Adset } from '@/services/adsets';
+import  { getAdsets, Adset } from '@/services/adsets';
 import MultiSelect from "@/components/shared/MultiSelect"
 import countries from '@/data/countries';
 import { CampaignData } from '@/schemas/campaignSchema';
@@ -110,30 +110,40 @@ export const TargetingSetup: React.FC<TargetingSetupProps> = ({
 
             {adsetType === 'existing' && (
               <div className="mt-4 pl-6">
-                <FormField
-                  control={control}
-                  name="adset_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Select Saved Adset</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a saved adset" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {adsets?.map(adset => (
-                            <SelectItem key={adset.adset_id} value={adset.adset_id}>
-                              {adset.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                {adsets && adsets.length > 0 ? (
+                  <FormField
+                    control={control}
+                    name="adset_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Select Saved Adset</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a saved adset" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {adsets.map(adset => (
+                              <SelectItem key={adset.adset_id} value={adset.adset_id}>
+                                {adset.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                ) : (
+                  <div className="flex items-center gap-2 bg-yellow-50 border border-yellow-200 rounded-md px-4 py-3 text-yellow-800 text-sm">
+                    <svg className="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01" />
+                    </svg>
+                    <span>No saved adsets available for this campaign.</span>
+                  </div>
+                )}
               </div>
             )}
 
@@ -390,7 +400,7 @@ export const TargetingSetup: React.FC<TargetingSetupProps> = ({
         </div>
       </div>
       <div className="flex justify-end mt-8">
-        {adsetType === 'existing' ? (
+        {(adsetType === 'existing' && adsets?.length > 0) && (
           <Button
             type="submit"
             disabled={control._formState?.isSubmitting}
@@ -407,7 +417,8 @@ export const TargetingSetup: React.FC<TargetingSetupProps> = ({
               </>
             )}
           </Button>
-        ) : <Button
+        )} 
+        {adsetType === 'new' && <Button
           type="button"
           onClick={handleNextStep}
         >

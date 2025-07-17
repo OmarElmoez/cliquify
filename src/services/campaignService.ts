@@ -2,7 +2,7 @@
 import axiosInstance from '@/lib/axios';
 
 export type Campaign = {
-  id: string;
+  campaign_id: string;
   name: string;
   status: string;
   buying_type: string;
@@ -32,7 +32,7 @@ export interface StatusUpdateResponse {
 }
 
 export const getCampaigns = async ({account_id, page = 1}: CampaignsProps): Promise<CampaignsResponse> => {
-  let url = `/campaigns/?account_id=${account_id}`;
+  let url = `/campaigns/list/?account_id=${account_id}`;
 
   if (page) {
     url += `&page=${page}`;

@@ -14,7 +14,7 @@ interface ErrorDialogProps {
   showActionButton?: boolean;
 }
 
-const ErrorDialog: React.FC<ErrorDialogProps> = ({
+const StatusDialog: React.FC<ErrorDialogProps> = ({
   open,
   onOpenChange,
   title,
@@ -26,15 +26,15 @@ const ErrorDialog: React.FC<ErrorDialogProps> = ({
   const defaultTitle = isError ? "Error" : "Success";
   
   // Auto-close dialog after 750ms (changed from 500ms)
-  useEffect(() => {
-    if (open) {
-      const timer = setTimeout(() => {
-        onOpenChange(false);
-      }, 1000);
+  // useEffect(() => {
+  //   if (open) {
+  //     const timer = setTimeout(() => {
+  //       onOpenChange(false);
+  //     }, 1000);
       
-      return () => clearTimeout(timer);
-    }
-  }, [open, onOpenChange]);
+  //     return () => clearTimeout(timer);
+  //   }
+  // }, [open, onOpenChange]);
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -52,7 +52,7 @@ const ErrorDialog: React.FC<ErrorDialogProps> = ({
             {description}
           </AlertDialogDescription>
         </AlertDialogHeader>
-        {showActionButton && !isError && (
+        {showActionButton && (
           <AlertDialogFooter>
             <AlertDialogAction 
               className="bg-[#9b87f5] text-white hover:bg-[#9b87f5]/90 w-full"
@@ -67,4 +67,4 @@ const ErrorDialog: React.FC<ErrorDialogProps> = ({
   );
 };
 
-export default ErrorDialog;
+export default StatusDialog;

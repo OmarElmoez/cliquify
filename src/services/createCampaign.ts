@@ -15,8 +15,7 @@ const createCampaign = async (campaign: CampaignData): Promise<CreateCampaignRes
     });
     return response.data;
   } catch (error) {
-    console.error('Error creating campaign:', error);
-    throw error;
+    return error.response.data.error
   }
 };
 

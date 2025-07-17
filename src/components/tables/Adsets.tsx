@@ -6,21 +6,34 @@ import {
   TableBody,
   TableCell,
 } from "@/components/ui/table";
-import getAdsets from "@/services/adsets";
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+
+import { getPaginatedAdsets, paginatedAdsetsResponse } from "@/services/adsets";
 import { useEffect, useState } from "react";
 import { Badge } from "../ui/badge";
+import getPageNumbers from "@/utils/getPageNumbers";
 
-const AdsetsTable = ({campaign_id}: {campaign_id: string}) => {
+type TAdsetTableProps = {
+  id: string, 
+  getFor: 'campaign' | 'account'
+  setActiveTab: React.Dispatch<React.SetStateAction<string>>, 
+  setSelectedAdset: React.Dispatch<React.SetStateAction<string>>
+}
 
-  const [adsets, setAdsets] = useState([]);
+const AdsetsTable = ({id, getFor, setActiveTab, setSelectedAdset}: TAdsetTableProps) => {
+
+  const [adsets, setAdsets] = useState<paginatedAdsetsResponse>();
   const [isLoading, setIsLoading] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
 
   useEffect(() => {
     const fetchAdsets = async () => {
       setIsLoading(true)
       try {
-        const res = await getAdsets({campaign_id})
-        setAdsets(res.response)
+        const res = await getPaginatedAdsets({id, getFor, page: currentPage})
+        setAdsets(res)
         setIsLoading(false)
       } catch (error) {
         console.error('failed to fetch adsets: ', error)
@@ -28,12 +41,18 @@ const AdsetsTable = ({campaign_id}: {campaign_id: string}) => {
       }
     }
 
-    if (campaign_id) {
+    if (id) {
       fetchAdsets();
     }
-  }, [])
+  }, [id, currentPage])
+
+  const paginationMeta = {
+    page: currentPage,
+    pages: Math.ceil((adsets?.count) / 20)
+  }
 
   return (
+    <>
     <div className="border rounded-md overflow-hidden">
       <Table>
         <TableHeader>
@@ -54,17 +73,20 @@ const AdsetsTable = ({campaign_id}: {campaign_id: string}) => {
                 Loading ad sets...
               </TableCell>
             </TableRow>
-          ) : (adsets?.length === 0) ? (
+          ) : (adsets?.results?.length === 0) ? (
             <TableRow>
               <TableCell colSpan={6} className="py-8 text-center">
-                {!campaign_id ? "Please select a campaign to view ad sets." : "No ad sets available."}
+                {getFor === 'campaign' ? "No ad sets available for this campaign." : "No ad sets available for this account."}
               </TableCell>
             </TableRow>
           )
           : (
-            adsets.map((adset) => (
+            adsets?.results?.map((adset) => (
               <TableRow key={adset.id}>
-                <TableCell className="py-4 px-4">{adset.name}</TableCell>
+                <TableCell className="py-4 px-4 cursor-pointer hover:underline hover:text-[#1890ff] decoration-1 w-fit flex" onClick={() => {
+                  setActiveTab('ads')
+                  setSelectedAdset(adset.adset_id)
+                }}>{adset.name}</TableCell>
                 <TableCell className="py-4 px-4">
                   <Badge
                     variant={
@@ -111,6 +133,58 @@ const AdsetsTable = ({campaign_id}: {campaign_id: string}) => {
         </TableBody>
       </Table>
     </div>
+    {paginationMeta && paginationMeta.pages > 1 && (
+        <div className="mt-6">
+          <Pagination>
+            <PaginationContent>
+              {/* Previous Page Button */}
+              <PaginationItem>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                  className="flex items-center gap-1"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  {/* <span>Previous</span> */}
+                </Button>
+              </PaginationItem>
+
+              {/* Page Numbers */}
+              {getPageNumbers({ paginationMeta }).map((pageNum) => (
+                <PaginationItem key={pageNum} className='cursor-pointer'>
+                  {pageNum === 'ellipsis' ? (
+                    <PaginationEllipsis />
+                  ) : (
+                    <PaginationLink
+                      isActive={currentPage === pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                    >
+                      {pageNum}
+                    </PaginationLink>
+                  )}
+                </PaginationItem>
+              ))}
+
+              {/* Next Page Button */}
+              <PaginationItem>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={currentPage === paginationMeta.pages}
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  className="flex items-center gap-1"
+                >
+                  {/* <span>Next</span> */}
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
+    </>
   );
 };
 

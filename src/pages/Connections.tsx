@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { Link, Search } from 'lucide-react';
+import { Link, Search, Unplug } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -10,6 +10,10 @@ import { AdAccount, getAdAccounts } from '@/services/adAccountService';
 import Loading from '@/components/shared/Loader';
 import { access } from 'fs';
 import checkConnections from '@/services/check-connections';
+import StatusDialog from '@/components/shared/StatusDialog';
+import { useDialog } from '@/hooks/useDialog';
+import ConfirmDialog from '@/components/shared/ConfirmDialog';
+import deleteMetaAdAccount from '@/services/deleteMetaAdAccount';
 
 // Mock data
 const mockFacebookAccounts = [
@@ -120,61 +124,106 @@ const ConnectAccountModal = () => {
 
 const AccountsTable = ({ accounts, platform }: { accounts: AdAccount[], platform: string }) => {
 
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [accountToDisconnect, setAccountToDisconnect] = useState<AdAccount | null>(null);
+
+  const handleDisconnectClick = (account: AdAccount) => {
+    setAccountToDisconnect(account);
+    setConfirmOpen(true);
+  };
+
+  const handleConfirmDisconnect = async () => {
+    // TODO: Implement actual disconnect logic here
+    // Example: disconnectAccount(accountToDisconnect)
+    // For now, just close the dialog
+    const res = await deleteMetaAdAccount({ account_id: accountToDisconnect.id })
+    if (res.response) {
+      setAccountToDisconnect(null)
+      window.location.reload();
+    }
+  };
+
   return (
-    <div className="mt-4 border rounded-md overflow-hidden">
-      <div className="flex items-center p-4 bg-gray-50 border-b">
-        <div className="flex items-center gap-2">
-          {platform === 'facebook' && <FacebookIcon />}
-          {platform === 'google' && <GoogleIcon />}
-          <h3 className="font-medium">
-            {platform === 'facebook' ? 'Facebook' : 'Google Ads'}
-          </h3>
-        </div>
-        {/* <div className="ml-auto">
+    <>
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={(open) => {
+          setConfirmOpen(open);
+          if (!open) setAccountToDisconnect(null);
+        }}
+        title="Disconnect Account"
+        description={`Are you sure you want to disconnect the account "${accountToDisconnect?.name}"? This action cannot be undone.`}
+        confirmLabel="Disconnect"
+        cancelLabel="Cancel"
+        onConfirm={handleConfirmDisconnect}
+      />
+      <div className="mt-4 border rounded-md overflow-hidden">
+        <div className="flex items-center p-4 bg-gray-50 border-b">
+          <div className="flex items-center gap-2">
+            {platform === 'facebook' && <FacebookIcon />}
+            {platform === 'google' && <GoogleIcon />}
+            <h3 className="font-medium">
+              {platform === 'facebook' ? 'Facebook' : 'Google Ads'}
+            </h3>
+          </div>
+          {/* <div className="ml-auto">
           <Button variant="link" className="text-brand-blue">
             Edit tracking template
           </Button>
         </div> */}
-      </div>
+        </div>
 
-      <table className="w-full">
-        <thead>
-          <tr className="bg-gray-50 border-b [&>th]:text-center">
-            <th className="py-3 px-4 text-left font-medium text-sm text-gray-600">AD ACCOUNT</th>
-            <th className="py-3 px-4 text-left font-medium text-sm text-gray-600">Amount Spent</th>
-            <th className="py-3 px-4 text-left font-medium text-sm text-gray-600">Currency</th>
-            {/* <th className="py-3 px-4 text-left font-medium text-sm text-gray-600">
+        <table className="w-full">
+          <thead>
+            <tr className="bg-gray-50 border-b [&>th]:text-center">
+              <th className="py-3 px-4 text-left font-medium text-sm text-gray-600">AD ACCOUNT</th>
+              <th className="py-3 px-4 text-left font-medium text-sm text-gray-600">Amount Spent</th>
+              <th className="py-3 px-4 text-left font-medium text-sm text-gray-600">Currency</th>
+              <th className="py-3 px-4 text-left font-medium text-sm text-gray-600">Action</th>
+              {/* <th className="py-3 px-4 text-left font-medium text-sm text-gray-600">
               {platform === 'facebook' ? 'LIMIT DATA USE' : ''}
             </th>
             <th className="py-3 px-4 text-left font-medium text-sm text-gray-600">AUTO TRACKING</th> */}
-          </tr>
-        </thead>
-        <tbody>
-          {accounts?.map(account => (
-            <tr key={account.id} className="border-b [&>td]:text-center">
-              <td className="py-4 px-4">
-                <div className="flex items-center justify-center gap-2">
-                  <span className="font-medium">{account.name}</span>
-                  <Badge variant="outline" className={`${account.account_status === 1 ? 'bg-brand-lightGreen text-brand-green' : 'bg-gray-100 text-gray-600'} rounded-full`}>
-                    {account.account_status === 1 ? 'Active' : 'Inactive'}
-                  </Badge>
-                </div>
-              </td>
-              <td className="py-4 px-4">{account.amount_spent}</td>
-              <td className="py-4 px-4">{account.currency}</td>
-              {/* <td className="py-4 px-4">
+            </tr>
+          </thead>
+          <tbody>
+            {accounts?.map(account => (
+              <tr key={account.id} className="border-b [&>td]:text-center">
+                <td className="py-4 px-4">
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="font-medium">{account.name}</span>
+                    <Badge variant="outline" className={`${account.account_status === 1 ? 'bg-brand-lightGreen text-brand-green' : 'bg-gray-100 text-gray-600'} rounded-full`}>
+                      {account.account_status === 1 ? 'Active' : 'Inactive'}
+                    </Badge>
+                  </div>
+                </td>
+                <td className="py-4 px-4">{account.amount_spent}</td>
+                <td className="py-4 px-4">{account.currency}</td>
+                <td className="py-4 px-4 flex justify-center items-center">
+                  <Button
+                    className="flex items-center justify-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-full shadow transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-red-400"
+                    title="Disconnect this account"
+                    type="button"
+                    onClick={() => handleDisconnectClick(account)}
+                  >
+                    <Unplug className="w-4 h-4" />
+                    <span className="font-medium">Disconnect</span>
+                  </Button>
+                </td>
+                {/* <td className="py-4 px-4">
                 {platform === 'facebook' && (
                   <Switch checked={false} />
                 )}
               </td> */}
-              {/* <td className="py-4 px-4">
+                {/* <td className="py-4 px-4">
                 <Switch checked={account.autoTracking} />
               </td> */}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 };
 
@@ -182,15 +231,25 @@ const Connections = () => {
   const [adAccounts, setAdAccounts] = useState<AdAccount[]>()
   const [isLoading, setIsLoading] = useState(true)
   const [isConnected, setIsConnected] = useState(false)
+  const {
+    isDialogOpen,
+    dialogState,
+    showDialog,
+    handleDialogClose
+  } = useDialog();
 
   useEffect(() => {
 
     const fetchAdAccounts = async () => {
       try {
         const res = await getAdAccounts();
+        // if (typeof res === 'string') {
+        //   showDialog('error', 'An Error Occurred', res, true)
+        //   return;
+        // }
         setAdAccounts(res.data);
       } catch (error) {
-        console.log('failed to fetch ad accounts');
+        console.log('failed to fetch ad accounts', error);
         throw error;
       } finally {
         setIsLoading(false)
@@ -200,7 +259,10 @@ const Connections = () => {
     const checkConnectionStatus = async () => {
       try {
         const res = await checkConnections();
-        if (res) {
+        console.log('from connection: ', res);
+        if (res.connections.length === 0) {
+          setIsConnected(false)
+        } else {
           setIsConnected(true)
         }
       } catch (error) {
@@ -215,6 +277,14 @@ const Connections = () => {
 
   return (
     <>
+      <StatusDialog
+        open={isDialogOpen}
+        onOpenChange={handleDialogClose}
+        title={dialogState.title}
+        description={dialogState.description}
+        variant={dialogState.variant}
+        showActionButton={dialogState.showActionButton}
+      />
       {isLoading ? (<Loading size={100} />) :
         (!isConnected ? (
           <div className="flex flex-col items-center justify-center py-16 px-4">

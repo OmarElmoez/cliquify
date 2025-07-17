@@ -22,7 +22,8 @@ export const getAdAccounts = async (): Promise<adAccountResponse> => {
     const response = await axiosInstance.get('/adaccounts/list/');
     return response.data;
   } catch (error) {
-    console.error('Error fetching ad accounts:', error);
-    throw error;
+    return error.response.data.error;
+    // console.error('Error fetching ad accounts:', error);
+    // throw error;
   }
 };
