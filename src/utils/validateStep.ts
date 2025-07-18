@@ -51,6 +51,7 @@ export function validateStep(
         // }
         // special_ad_categories is optional, so no need to check
       }
+
       if (!values.creative_id && !values.creative_data.name) {
         return {
           valid: false,
@@ -146,6 +147,13 @@ export function validateStep(
           return {
             valid: false,
             error: "Bid strategy is required.",
+          };
+        }
+
+        if (adset.bid_strategy && adset.bid_strategy !== 'LOWEST_COST_WITHOUT_CAP' && !adset.bid_amount) {
+          return {
+            valid: false,
+            error: "You should set Bid amount for this Bid strategy",
           };
         }
 

@@ -198,7 +198,7 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
           name="ad_data.name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Ad Name</FormLabel>
+              <FormLabel data-required='true'>Ad Name</FormLabel>
               <FormControl>
                 <Input
                   placeholder="Enter ad name"
@@ -243,7 +243,7 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
               name="account_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Select Ad Account</FormLabel>
+                  <FormLabel data-required='true'>Select Ad Account</FormLabel>
                   <Select onValueChange={(value) => {
                     field.onChange(value);
                     setSelectedAdAccount(value);
@@ -272,7 +272,7 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
               name="page_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Select Page</FormLabel>
+                  <FormLabel data-required='true'>Select Page</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
@@ -325,7 +325,7 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
                     name="campaign_data.name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Campaign Name</FormLabel>
+                        <FormLabel data-required='true'>Campaign Name</FormLabel>
                         <FormControl>
                           <Input
                             placeholder="Enter campaign name"
@@ -344,7 +344,7 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
                     name="campaign_data.objective"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Objective</FormLabel>
+                        <FormLabel data-required='true'>Objective</FormLabel>
                         <Select onValueChange={(value) => {
                           field.onChange(value);
                           updateCampaign({ campaign_data: { ...campaign.campaign_data, objective: value } })
@@ -593,7 +593,7 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
                   name="creative_data.name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Name</FormLabel>
+                      <FormLabel data-required='true'>Name</FormLabel>
                       <FormControl>
                         <Input
                           placeholder="Enter ad name"
@@ -611,7 +611,7 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
                   name="creative_data.object_story_spec.link_data.link"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>URL</FormLabel>
+                      <FormLabel data-required='true'>URL</FormLabel>
                       <FormControl>
                         <Input
                           placeholder="https://example.com"
@@ -734,7 +734,7 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
                   name="creative_data.object_story_spec.link_data.call_to_action.type"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Call to Action</FormLabel>
+                      <FormLabel data-required='true'>Call to Action</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>

@@ -64,7 +64,7 @@ export const BudgetScheduling = ({
           {/* Budget Type and Amount */}
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <Label>Budget</Label>
+              <Label data-required='true'>Budget</Label>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger>
@@ -194,7 +194,7 @@ export const BudgetScheduling = ({
               name="adset_data.end_time"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Schedule End Date & Time</FormLabel>
+                  <FormLabel data-required={budgetType === 'lifetime' ? 'true' : undefined}>Schedule End Date & Time</FormLabel>
                   <div className="flex gap-4 mt-2">
                     <Popover>
                       <PopoverTrigger asChild>

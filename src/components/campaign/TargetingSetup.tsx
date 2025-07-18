@@ -155,7 +155,7 @@ export const TargetingSetup: React.FC<TargetingSetupProps> = ({
                   name="adset_data.name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Name</FormLabel>
+                      <FormLabel data-required='true'>Name</FormLabel>
                       <FormControl>
                         <Input
                           placeholder="Enter adset name"
@@ -196,7 +196,7 @@ export const TargetingSetup: React.FC<TargetingSetupProps> = ({
                   name="adset_data.optimization_goal"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Optimization Goal</FormLabel>
+                      <FormLabel data-required='true'>Optimization Goal</FormLabel>
                       <Select onValueChange={(value) => {
                         field.onChange(value);
                         setSelectedOptimizationGoal(value)
@@ -223,7 +223,7 @@ export const TargetingSetup: React.FC<TargetingSetupProps> = ({
                   name="adset_data.billing_event"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Billing Event</FormLabel>
+                      <FormLabel data-required='true'>Billing Event</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
@@ -251,7 +251,7 @@ export const TargetingSetup: React.FC<TargetingSetupProps> = ({
                   name="adset_data.bid_strategy"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Bid Strategy</FormLabel>
+                      <FormLabel data-required='true'>Bid Strategy</FormLabel>
                       <Select onValueChange={(value) => {
                         field.onChange(value)
                         setBidValue(value)
@@ -274,12 +274,12 @@ export const TargetingSetup: React.FC<TargetingSetupProps> = ({
                 />
 
                 {/* Bid Amount */}
-                {bidValue !== "LOWEST_COST_WITHOUT_CAP" && <FormField
+                {bidValue && bidValue !== "LOWEST_COST_WITHOUT_CAP" && <FormField
                   control={control}
                   name="adset_data.bid_amount"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Bid Amount</FormLabel>
+                      <FormLabel data-required='true'>Bid Amount</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -299,7 +299,7 @@ export const TargetingSetup: React.FC<TargetingSetupProps> = ({
                   name="adset_data.targeting.geo_locations.countries"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Location</FormLabel>
+                      <FormLabel data-required='true'>Location</FormLabel>
                       <FormControl>
                         <MultiSelect
                           placeholder='Select a location'

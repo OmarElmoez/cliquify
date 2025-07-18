@@ -99,3 +99,10 @@
     @apply bg-background text-foreground;
   }
 }
+
+label[data-required="true"]::after {
+  content: " *";
+  color: #ef4444;
+  font-weight: bold;
+  font-size: medium;
+}

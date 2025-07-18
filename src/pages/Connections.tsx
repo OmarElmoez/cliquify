@@ -259,7 +259,6 @@ const Connections = () => {
     const checkConnectionStatus = async () => {
       try {
         const res = await checkConnections();
-        console.log('from connection: ', res);
         if (res.connections.length === 0) {
           setIsConnected(false)
         } else {
