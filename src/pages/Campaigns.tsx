@@ -20,6 +20,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import AdsetsTable from '@/components/tables/Adsets';
 import getPageNumbers from '@/utils/getPageNumbers';
 import AdsTable from '@/components/tables/ads';
+import refreshCampaigns from '@/services/refreshCampaigns';
+import { set } from 'date-fns';
 
 const FacebookIcon = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -125,13 +127,26 @@ const Campaigns = () => {
   };
 
   const handleRefreshCampaigns = async () => {
+    // try {
+    //   const response = await getCampaigns({ account_id: selectedAccount });
+    //   setCampaignsData(response);
+    //   toast.success("Campaigns refreshed successfully");
+    // } catch (error) {
+    //   console.error('Error refreshing campaigns:', error);
+    //   toast.error("Failed to refresh campaigns");
+    // }
+    setRefreshing(true);
     try {
-      const response = await getCampaigns({ account_id: selectedAccount });
-      setCampaignsData(response);
+      const res = await refreshCampaigns();
+      if (typeof res === 'string') {
+        showDialog('error', 'An Error Occurred', res, true);
+      }
+      setRefreshing(false);
       toast.success("Campaigns refreshed successfully");
     } catch (error) {
+      setRefreshing(false);
       console.error('Error refreshing campaigns:', error);
-      toast.error("Failed to refresh campaigns");
+      showDialog('error', 'Failed to Refresh Campaigns', 'An error occurred while refreshing', true);
     }
   };
 
