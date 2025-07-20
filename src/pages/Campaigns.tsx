@@ -140,13 +140,16 @@ const Campaigns = () => {
       const res = await refreshCampaigns();
       if (typeof res === 'string') {
         showDialog('error', 'An Error Occurred', res, true);
+        setRefreshing(false);
+        return;
       }
-      setRefreshing(false);
-      toast.success("Campaigns refreshed successfully");
+      toast.success("Campaigns synced successfully");
+      setRefreshing(false)
+      window.location.reload();
     } catch (error) {
       setRefreshing(false);
-      console.error('Error refreshing campaigns:', error);
-      showDialog('error', 'Failed to Refresh Campaigns', 'An error occurred while refreshing', true);
+      console.error('Error syncing campaigns:', error);
+      showDialog('error', 'Failed to sync Campaigns', 'An error occurred while syncing', true);
     }
   };
 
@@ -265,7 +268,7 @@ const Campaigns = () => {
                 ) : (
                   <RefreshCcw className="h-4 w-4" />
                 )}
-                {refreshing ? "Refreshing..." : "Refresh campaigns"}
+                {refreshing ? "Syncing..." : "Sync campaigns"}
               </Button>
             )}
           </div>
