@@ -1,13 +1,15 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { Eye, Users, BarChart2, ThumbsUp, Activity } from "lucide-react";
 import {
-  Eye,
-  Users,
-  BarChart2,
-  ThumbsUp,
-  Activity,
-} from "lucide-react";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { getPages, Page } from "@/services/pages";
 
 const insightsData = [
   {
@@ -48,10 +50,36 @@ const insightsData = [
 ];
 
 const Insights: React.FC = () => {
+
+  const [showInsights, setShowInsights] = useState(false);
+  const [pages, setPages] = useState<Page[]>([]);
+
+  useEffect(() => {
+    getPages().then((pages) => {
+      setPages(pages);
+    })
+  }, []) 
+
   return (
     <div className="p-8">
       <h1 className="text-3xl font-bold mb-6">Insights</h1>
-      <div className="flex gap-6 overflow-x-auto">
+      <Select
+        onValueChange={(value) => {
+          setShowInsights(true)
+        }}
+      >
+        <SelectTrigger className="max-w-[500px] mt-2 mb-4">
+          <SelectValue placeholder="Select Page" />
+        </SelectTrigger>
+        <SelectContent>
+          {pages.map((page) => (
+            <SelectItem key={page.id} value={page.id}>
+              {page.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {showInsights && <div className="flex gap-6 overflow-x-auto">
         {insightsData.map((insight) => {
           const Icon = insight.icon;
           return (
@@ -76,7 +104,7 @@ const Insights: React.FC = () => {
             </Card>
           );
         })}
-      </div>
+      </div>}
     </div>
   );
 };

@@ -29,7 +29,7 @@ const App = () => (
           <Route path="/" element={<HomePage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms-of-services" element={<TermsOfService />} />
-          <Route path="/insights" element={<AppLayout><Insights /></AppLayout>} />
+          <Route path="/pages" element={<AppLayout><Insights /></AppLayout>} />
           <Route path="/sign-in" element={<SignIn />} />
           <Route path="/dashboard" element={
             <AppLayout>
