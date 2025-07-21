@@ -12,6 +12,9 @@ import SignIn from "./pages/SignIn";
 import NotFound from "./pages/NotFound";
 import OAuthCallback from "@/pages/OAuthCallback";
 import MetaCallback from "@/pages/MetaCallback";
+import HomePage from "./pages/Home";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfServices";
 
 const queryClient = new QueryClient();
 
@@ -22,7 +25,10 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<SignIn />} />
+          <Route path="/" element={<HomePage />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms-of-services" element={<TermsOfService />} />
+          <Route path="/sign-in" element={<SignIn />} />
           <Route path="/dashboard" element={
             <AppLayout>
               <Campaigns />
@@ -39,10 +45,10 @@ const App = () => (
             </AppLayout>
           } />
           <Route path="/campaigns/create" element={<CreateCampaign />} />
-          <Route path="/campaigns" element={<Navigate to="/" replace />} />
+          {/* <Route path="/campaigns" element={<Navigate to="/" replace />} /> */}
           <Route path="/oauth/callback" element={<OAuthCallback />} />
           <Route path="/meta/callback" element={<MetaCallback />} />
-          <Route path="/campaigns" element={<Navigate to="/dashboard" replace />} />
+          {/* <Route path="/campaigns" element={<Navigate to="/dashboard" replace />} /> */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
