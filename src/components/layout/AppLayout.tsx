@@ -1,6 +1,6 @@
 import React, { ReactNode, useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, LayoutDashboard, Globe, Users } from "lucide-react";
+import { Menu, X, LayoutDashboard, Globe, Users, BookOpen } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -21,7 +21,13 @@ type SideNavItemProps = {
   onClick?: () => void;
 };
 
-const SideNavItem = ({ icon, title, path, isActive, onClick }: SideNavItemProps) => {
+const SideNavItem = ({
+  icon,
+  title,
+  path,
+  isActive,
+  onClick,
+}: SideNavItemProps) => {
   return (
     <Link
       to={path}
@@ -47,6 +53,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [pages, setPages] = useState([]);
   const [selectedPage, setSelectedPage] = useState<string | null>(null);
+  const [isPagesOpen, setIsPagesOpen] = useState(false);
   const location = useLocation();
 
   const toggleSidebar = () => {
@@ -83,6 +90,10 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       title: "Connections",
       path: "/connections",
       icon: <Globe size={20} />,
+    },
+    {
+      title: "Pages",
+      icon: <BookOpen size={20} />,
     },
   ];
 
@@ -132,27 +143,36 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                   location.pathname === item.path ||
                   (item.path !== "/" && location.pathname.startsWith(item.path))
                 }
-                onClick={() => setSelectedPage(null)}
+                onClick={() => {
+                  if (item.title === "Pages") {
+                    setIsPagesOpen(!isPagesOpen);
+                  } else {
+                    setSelectedPage(null);
+                    setIsPagesOpen(false);
+                  }
+                }}
               />
             ))}
-          <div>
-            <Label className="font-medium text-lg">Pages</Label>
-            <Select onValueChange={(value) => {
-              navigate('/insights')
-              setSelectedPage(value);
-            }} value={selectedPage || ""}>
-              <SelectTrigger className="w-full mt-2">
-                <SelectValue placeholder="Select Page" />
-              </SelectTrigger>
-              <SelectContent>
-                {pages.map((page) => (
-                  <SelectItem key={page.id} value={page.id}>
-                    {page.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+            {isPagesOpen && <div>
+              <Select
+                onValueChange={(value) => {
+                  navigate("/insights");
+                  setSelectedPage(value);
+                }}
+                value={selectedPage || ""}
+              >
+                <SelectTrigger className="w-full mt-2">
+                  <SelectValue placeholder="Select Page" />
+                </SelectTrigger>
+                <SelectContent>
+                  {pages.map((page) => (
+                    <SelectItem key={page.id} value={page.id}>
+                      {page.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>}
           </div>
 
           <button
