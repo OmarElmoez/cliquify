@@ -10,10 +10,10 @@ type PagesResponse = {
   pages: Page[];
 }
 
-export const getPages = async (): Promise<PagesResponse> => {
+export const getPages = async (): Promise<Page[]> => {
   try {
     const response = await axiosInstance.get<PagesResponse>(`/pages/`);
-    return response.data;
+    return response.data.pages;
   } catch (error) {
     console.error('Error fetching pages:', error);
     throw error;

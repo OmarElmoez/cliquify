@@ -1,19 +1,31 @@
-import React, { ReactNode, useEffect, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, LayoutDashboard, Globe, Users } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import React, { ReactNode, useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Menu, X, LayoutDashboard, Globe, Users } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
+import { getPages } from "@/services/pages";
+import { set } from "date-fns";
 
 type SideNavItemProps = {
   icon: ReactNode;
   title: string;
   path: string;
   isActive: boolean;
+  onClick?: () => void;
 };
 
-const SideNavItem = ({ icon, title, path, isActive }: SideNavItemProps) => {
+const SideNavItem = ({ icon, title, path, isActive, onClick }: SideNavItemProps) => {
   return (
     <Link
       to={path}
+      onClick={onClick}
       className={cn(
         "flex items-center gap-3 px-3 py-2 rounded-md transition-colors",
         isActive
@@ -33,20 +45,28 @@ type AppLayoutProps = {
 
 const AppLayout = ({ children }: AppLayoutProps) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [pages, setPages] = useState([]);
+  const [selectedPage, setSelectedPage] = useState<string | null>(null);
   const location = useLocation();
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
-  const token = localStorage.getItem('access_token');
+  const token = localStorage.getItem("access_token");
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!token) {
-      navigate('/');
+      navigate("/");
+      return;
     }
-  }, [token, navigate]);
+
+    getPages().then((pages) => {
+      setPages(pages);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const navItems = [
     {
@@ -108,11 +128,33 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                 icon={item.icon}
                 title={isSidebarOpen ? item.title : ""}
                 path={item.path}
-                isActive={location.pathname === item.path ||
-                  (item.path !== "/" && location.pathname.startsWith(item.path))}
+                isActive={
+                  location.pathname === item.path ||
+                  (item.path !== "/" && location.pathname.startsWith(item.path))
+                }
+                onClick={() => setSelectedPage(null)}
               />
             ))}
+          <div>
+            <Label className="font-medium text-lg">Pages</Label>
+            <Select onValueChange={(value) => {
+              navigate('/insights')
+              setSelectedPage(value);
+            }} value={selectedPage || ""}>
+              <SelectTrigger className="w-full mt-2">
+                <SelectValue placeholder="Select Page" />
+              </SelectTrigger>
+              <SelectContent>
+                {pages.map((page) => (
+                  <SelectItem key={page.id} value={page.id}>
+                    {page.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
+          </div>
+
           <button
             onClick={() => {
               // Remove token from localStorage and reload or redirect
@@ -136,8 +178,8 @@ const AppLayout = ({ children }: AppLayoutProps) => {
           <div className="px-4 py-4">{children}</div>
         </main>
       </div>
-    )
-  }
+    );
+  };
 
   return renderContent(children);
 };

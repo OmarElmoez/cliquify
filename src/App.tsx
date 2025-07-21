@@ -15,6 +15,7 @@ import MetaCallback from "@/pages/MetaCallback";
 import HomePage from "./pages/Home";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfServices";
+import Insights from "./pages/Insights";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/" element={<HomePage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms-of-services" element={<TermsOfService />} />
+          <Route path="/insights" element={<AppLayout><Insights /></AppLayout>} />
           <Route path="/sign-in" element={<SignIn />} />
           <Route path="/dashboard" element={
             <AppLayout>

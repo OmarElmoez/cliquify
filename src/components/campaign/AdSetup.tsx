@@ -115,7 +115,7 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
     const fetchPages = async () => {
       try {
         const response = await getPages();
-        setPages(response.pages);
+        setPages(response);
       } catch (error) {
         console.error('Error fetching pages:', error);
         toast.error('Error fetching pages');
@@ -155,8 +155,10 @@ export const AdSetup = ({ campaign, updateCampaign, control, handleNextStep, cam
   }, [selectedAdAccount]);
 
   const getCampaignObjective = (campaingId: string) => {
-    const { objective } = campaigns?.find(campaign => campaign.campaign_id === campaingId);
-    updateCampaign({ campaign_data: { ...campaign.campaign_data, objective } })
+    const foundCampaign = campaigns?.find(campaign => campaign.campaign_id === campaingId);
+    if (foundCampaign && foundCampaign.objective) {
+      updateCampaign({ campaign_data: { ...campaign.campaign_data, objective: foundCampaign.objective } });
+    }
   }
 
   const adCategoriesOptions = (objectiveVal: string) => {
