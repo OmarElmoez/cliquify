@@ -1,5 +1,5 @@
-import React, { Fragment, useEffect, useState } from 'react';
-import { ArrowLeft, X } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { ArrowLeft, CircleX, Info, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -8,121 +8,158 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import audiencesData, { addNewAudience } from '@/data/dummyAudiences';
-import { useNavigate } from 'react-router-dom';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
-import { useFieldArray, useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { AudienceData, audienceSchema } from '@/schemas/audience';
-import { AdAccount, getAdAccounts } from '@/services/adAccountService';
-import { toast } from 'sonner';
-import { createAudience } from '@/services/audience';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "../ui/form";
+import { useFieldArray, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { AudienceData, audienceSchema } from "@/schemas/audience";
+import { AdAccount, getAdAccounts } from "@/services/adAccountService";
+import { toast } from "sonner";
+import { createAudience } from "@/services/audience";
 import { MultiValueInput } from "@/components/ui/multi-value-input";
-import StatusDialog from '@/components/shared/StatusDialog';
-import { useDialog } from '@/hooks/useDialog';
+import StatusDialog from "@/components/shared/StatusDialog";
+import { useDialog } from "@/hooks/useDialog";
+import { Separator } from "../ui/separator";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { get } from "http";
+import getPixels, { TPixel } from "@/services/getPixels";
 
-
-
-
-type AudienceType = 'initial' | 'website-visitors' | 'lookalike';
+type AudienceType = "initial" | "website-visitors" | "lookalike";
 
 interface CreateAudienceDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  handleSuccessfullState: (state: boolean) => void
+  handleSuccessfullState: (state: boolean) => void;
 }
 
-interface AudienceFormData {
-  name: string;
-  source: string;
-  days?: number;
-  sourceAudience?: string;
-}
+// interface AudienceFormData {
+//   name: string;
+//   source: string;
+//   days?: number;
+//   sourceAudience?: string;
+// }
 
-type TEventType = 'all-visitors' | 'pages-visitors' | 'time-visitors'
+type TEventType = "all-visitors" | "pages-visitors" | "time-visitors";
+type TOperator = "and" | "or";
 
-const CreateAudienceDialog = ({ open, onOpenChange, handleSuccessfullState }: CreateAudienceDialogProps) => {
-  const [currentView, setCurrentView] = useState<AudienceType>('initial');
-  const [eventType, setEventType] = useState<TEventType>();
+const CreateAudienceDialog = ({
+  open,
+  onOpenChange,
+  handleSuccessfullState,
+}: CreateAudienceDialogProps) => {
+  const [currentView, setCurrentView] = useState<AudienceType>("initial");
+  const [eventTypes, setEventTypes] = useState<Record<number, TEventType>>({});
   const [adAccounts, setAdAccounts] = useState<AdAccount[]>([]);
-  const [selectedAdAccount, setSelectedAdAccount] = useState<string>('');
-  const [formData, setFormData] = useState<AudienceFormData>({
-    name: '',
-    source: '',
-    days: 60,
-    sourceAudience: ''
-  });
-  const navigate = useNavigate();
-
-
+  const [selectedAdAccount, setSelectedAdAccount] = useState<string>("");
+  const [pixels, setPixels] = useState<TPixel[]>([]);
+  // const [formData, setFormData] = useState<AudienceFormData>({
+  //   name: '',
+  //   source: '',
+  //   days: 60,
+  //   sourceAudience: ''
+  // });
+  const [operatorValue, setOperatorValue] = useState<TOperator>("and");
+  const [showFilters, setShowFilters] = useState(false);
 
   const form = useForm<AudienceData>({
     resolver: zodResolver(audienceSchema),
     defaultValues: {
-      pixel_id: '',
-      account_id: '',
+      account_id: "",
       customaudience_data: {
-        name: '',
+        name: "",
         rule: {
           inclusions: {
-            operator: 'and',
+            operator: "and",
             rules: [
               {
                 event_sources: [
                   {
-                    type: 'pixel'
-                  }
+                    id: "",
+                    type: "pixel",
+                  },
                 ],
+                retention_seconds: "",
                 filter: {
-                  operator: '',
+                  operator: "",
                   filters: [
                     {
                       field: "",
-                      operator: '',
-                      value: []
-                    }
-                  ]
-                }
-              }
+                      operator: "",
+                      value: [],
+                    },
+                  ],
+                },
+              },
             ],
-
-          }
-        }
-      }
-    }
-  })
+          },
+        },
+      },
+    },
+  });
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
-    name: 'customaudience_data.rule.inclusions.rules'
-  })
+    name: "customaudience_data.rule.inclusions.rules",
+  });
 
-  const {
-    isDialogOpen,
-    dialogState,
-    showDialog,
-    handleDialogClose
-  } = useDialog();
+  const handleAddRule = () => {
+    const rulesNumber = fields?.length;
+    if (rulesNumber < 5) {
+      append({
+        event_sources: [
+          {
+            type: "pixel",
+          },
+        ],
+        filter: {
+          operator: "",
+          filters: [
+            {
+              field: "",
+              operator: "",
+              value: [],
+            },
+          ],
+        },
+      });
+    }
+  };
+
+  const handleRemoveRule = (index: number) => {
+    remove(index);
+  };
+
+  const { isDialogOpen, dialogState, showDialog, handleDialogClose } =
+    useDialog();
 
   const handleBack = () => {
-    setCurrentView('initial');
-    setFormData({
-      name: '',
-      source: '',
-      days: 60,
-      sourceAudience: ''
-    });
+    setCurrentView("initial");
+    if (fields && fields.length > 1 && remove) {
+      for (let i = fields.length - 1; i > 0; i--) {
+        remove(i);
+      }
+    }
   };
 
   const handleClose = () => {
-    setCurrentView('initial');
-    setFormData({
-      name: '',
-      source: '',
-      days: 60,
-      sourceAudience: ''
-    });
     onOpenChange(false);
   };
 
@@ -130,49 +167,49 @@ const CreateAudienceDialog = ({ open, onOpenChange, handleSuccessfullState }: Cr
     setCurrentView(type);
   };
 
-  const handleInputChange = (field: keyof AudienceFormData, value: string | number) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
+  // const handleInputChange = (field: keyof AudienceFormData, value: string | number) => {
+  //   setFormData(prev => ({
+  //     ...prev,
+  //     [field]: value
+  //   }));
+  // };
 
-  const handleCreateAudience = () => {
-    let newAudience;
+  // const handleCreateAudience = () => {
+  //   let newAudience;
 
-    if (currentView === 'lookalike' && formData.sourceAudience) {
-      // Find the source audience
-      const sourceAudience = audiencesData.find(aud => aud.id === formData.sourceAudience);
+  //   if (currentView === 'lookalike' && formData.sourceAudience) {
+  //     // Find the source audience
+  //     const sourceAudience = audiencesData.find(aud => aud.id === formData.sourceAudience);
 
-      if (sourceAudience) {
-        newAudience = {
-          id: `aud-${audiencesData.length + 1}`,
-          name: `${sourceAudience.name} - Lookalike`,
-          type: 'Lookalike',
-          source: sourceAudience.source,
-          size: '1000', // Default size for lookalike audiences
-          status: 'Active'
-        };
-      }
-    } else {
-      newAudience = {
-        id: `aud-${audiencesData.length + 1}`,
-        name: formData.name,
-        type: 'Website Visitors',
-        source: formData.source,
-        size: '0',
-        status: 'Active'
-      };
-    }
+  //     if (sourceAudience) {
+  //       newAudience = {
+  //         id: `aud-${audiencesData.length + 1}`,
+  //         name: `${sourceAudience.name} - Lookalike`,
+  //         type: 'Lookalike',
+  //         source: sourceAudience.source,
+  //         size: '1000', // Default size for lookalike audiences
+  //         status: 'Active'
+  //       };
+  //     }
+  //   } else {
+  //     newAudience = {
+  //       id: `aud-${audiencesData.length + 1}`,
+  //       name: formData.name,
+  //       type: 'Website Visitors',
+  //       source: formData.source,
+  //       size: '0',
+  //       status: 'Active'
+  //     };
+  //   }
 
-    if (newAudience) {
-      // Add the new audience to the data using the exported function
-      addNewAudience(newAudience);
-      navigate('/audiences');
-      // Close the dialog and reset form
-      handleClose();
-    }
-  };
+  //   if (newAudience) {
+  //     // Add the new audience to the data using the exported function
+  //     addNewAudience(newAudience);
+  //     navigate('/audiences');
+  //     // Close the dialog and reset form
+  //     handleClose();
+  //   }
+  // };
 
   const renderInitialView = () => (
     <>
@@ -191,19 +228,32 @@ const CreateAudienceDialog = ({ open, onOpenChange, handleSuccessfullState }: Cr
       <div className="px-4 py-6 space-y-4">
         {/* Website Visitors Option */}
         <div
-          onClick={() => handleSelectAudienceType('website-visitors')}
+          onClick={() => handleSelectAudienceType("website-visitors")}
           className="border rounded-md p-4 cursor-pointer hover:bg-gray-50"
         >
           <div className="flex justify-between items-start">
             <h3 className="font-medium text-lg mb-1">Website visitors</h3>
             <div className="flex gap-1">
-              <img src="/lovable-uploads/d5f033f6-b183-4516-9513-cf2d1e501443.png" alt="Meta" className="w-6 h-6" />
-              <img src="/lovable-uploads/cd26779e-65cb-474b-a2d2-3c5674a5638c.png" alt="LinkedIn" className="w-6 h-6" />
-              <img src="/lovable-uploads/cd26779e-65cb-474b-a2d2-3c5674a5638c.png" alt="Google" className="w-6 h-6" />
+              <img
+                src="/lovable-uploads/d5f033f6-b183-4516-9513-cf2d1e501443.png"
+                alt="Meta"
+                className="w-6 h-6"
+              />
+              <img
+                src="/lovable-uploads/cd26779e-65cb-474b-a2d2-3c5674a5638c.png"
+                alt="LinkedIn"
+                className="w-6 h-6"
+              />
+              <img
+                src="/lovable-uploads/cd26779e-65cb-474b-a2d2-3c5674a5638c.png"
+                alt="Google"
+                className="w-6 h-6"
+              />
             </div>
           </div>
           <p className="text-gray-600">
-            Nurture the people who've been to your site. Create an audience from your visitors and re-engage with them wherever they are online.
+            Nurture the people who've been to your site. Create an audience from
+            your visitors and re-engage with them wherever they are online.
           </p>
         </div>
 
@@ -232,13 +282,22 @@ const CreateAudienceDialog = ({ open, onOpenChange, handleSuccessfullState }: Cr
         const response = await getAdAccounts();
         setAdAccounts(response.data);
       } catch (error) {
-        console.error('Error fetching ad accounts:', error);
-        toast.error('Error fetching ad accounts');
+        console.error("Error fetching ad accounts:", error);
+        toast.error("Error fetching ad accounts");
       }
     };
+    if (open) {
+      fetchAdAccounts();
+    }
+  }, [open]);
 
-    fetchAdAccounts();
-  }, [])
+  useEffect(() => {
+    if (selectedAdAccount) {
+      getPixels({ account_id: selectedAdAccount }).then((pixels) => {
+        setPixels(pixels);
+      });
+    }
+  }, [selectedAdAccount]);
 
   const onSubmit = async (data: AudienceData) => {
     // Convert retention_days to seconds if present in the data
@@ -253,41 +312,50 @@ const CreateAudienceDialog = ({ open, onOpenChange, handleSuccessfullState }: Cr
             ...cleanedData.customaudience_data.rule,
             inclusions: {
               ...cleanedData.customaudience_data.rule.inclusions,
-              rules: cleanedData.customaudience_data.rule.inclusions.rules.map(rule => {
-                // Convert retention_seconds and clean filters in one go
-                let newRule = {
-                  ...rule,
-                  retention_seconds: rule.retention_seconds * 24 * 60 * 60
-                };
-                if (rule.filter && Array.isArray(rule.filter.filters)) {
-                  const cleanedFilters = rule.filter.filters.filter(f => Object.keys(f).length > 0);
-                  newRule = {
-                    ...newRule,
-                    filter: {
-                      ...rule.filter,
-                      filters: cleanedFilters
-                    }
+              rules: cleanedData.customaudience_data.rule.inclusions.rules.map(
+                (rule) => {
+                  // Convert retention_seconds and clean filters in one go
+                  let newRule = {
+                    ...rule,
+                    retention_seconds: Number(rule.retention_seconds) * 24 * 60 * 60,
                   };
+                  if (rule.filter && Array.isArray(rule.filter.filters)) {
+                    const cleanedFilters = rule.filter.filters.filter(
+                      (f) => Object.keys(f).length > 0
+                    );
+                    newRule = {
+                      ...newRule,
+                      filter: {
+                        ...rule.filter,
+                        filters: cleanedFilters,
+                      },
+                    };
+                  }
+                  return newRule;
                 }
-                return newRule;
-              })
-            }
-          }
-        }
+              ),
+            },
+          },
+        },
       };
     }
 
-    const res = await createAudience(cleanedData)
+    const res = await createAudience(cleanedData);
     if (res.id) {
-      handleSuccessfullState(true)
-      handleClose()
+      handleSuccessfullState(true);
+      handleClose();
     } else {
-      showDialog('error', 'Ooops', "Failed to create audience, please try again later.", false);
+      showDialog(
+        "error",
+        "Ooops",
+        "Failed to create audience, please try again later.",
+        false
+      );
     }
-  }
+  };
 
   const renderWebsiteVisitorsView = () => (
-    <>
+    <section className="h-[741px]">
       <StatusDialog
         open={isDialogOpen}
         onOpenChange={handleDialogClose}
@@ -296,7 +364,7 @@ const CreateAudienceDialog = ({ open, onOpenChange, handleSuccessfullState }: Cr
         variant={dialogState.variant}
         showActionButton={dialogState.showActionButton}
       />
-      <DialogHeader className="bg-brand-blue text-white px-4 py-4 flex flex-row items-center">
+      <DialogHeader className="bg-brand-blue text-white p-4 flex flex-row items-center">
         <Button
           variant="ghost"
           size="icon"
@@ -305,23 +373,80 @@ const CreateAudienceDialog = ({ open, onOpenChange, handleSuccessfullState }: Cr
         >
           <ArrowLeft size={18} />
         </Button>
-        <DialogTitle className="text-xl">Create website traffic audience</DialogTitle>
+        <DialogTitle className="text-xl">
+          Create website traffic audience
+        </DialogTitle>
       </DialogHeader>
 
-      <div className="p-6 space-y-6">
+      <div className="p-6 pt-4 space-y-6">
         <Form {...form}>
-          <form className='space-y-4' onSubmit={form.handleSubmit(onSubmit)}>
+          <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
 
-            <div className='flex gap-2 items-center'>
+            <FormField
+              control={form.control}
+              name="account_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="font-medium text-md">
+                    Select Ad Account
+                  </FormLabel>
+                  <Select
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      setSelectedAdAccount(value);
+                    }}
+                    value={selectedAdAccount}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Ad Account" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {adAccounts.map((account) => (
+                        <SelectItem key={account.id} value={account.id}>
+                          {account.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="customaudience_data.name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="font-medium text-md">
+                    Audience name
+                  </FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter an audience name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="flex gap-2 items-center">
               <span>Include who meet</span>
               <FormField
                 control={form.control}
                 name="customaudience_data.rule.inclusions.operator"
                 render={({ field }) => (
                   <FormItem>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={(value: TOperator) => {
+                        field.onChange(value);
+                        setOperatorValue(value);
+                      }}
+                      value={field.value}
+                    >
                       <FormControl>
-                        <SelectTrigger className='w-[80px]'>
+                        <SelectTrigger className="w-[80px]">
                           <SelectValue />
                         </SelectTrigger>
                       </FormControl>
@@ -337,88 +462,121 @@ const CreateAudienceDialog = ({ open, onOpenChange, handleSuccessfullState }: Cr
               <span>of the following criteria:</span>
             </div>
 
-            <FormField
-              control={form.control}
-              name="account_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="font-medium text-md">Select Ad Account</FormLabel>
-                  <Select onValueChange={(value) => {
-                    field.onChange(value);
-                    setSelectedAdAccount(value);
-                  }} value={selectedAdAccount}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Ad Account" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {adAccounts.map(account => (
-                        <SelectItem key={account.id} value={account.id}>
-                          {account.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="pixel_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="font-medium text-md">Source</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Source" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value='3845563522362969'>test-ad-account Pixel</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="space-y-2">
-              <label className="font-medium text-md">Events</label>
-              <Select onValueChange={(value: TEventType) => { setEventType(value) }} defaultValue={eventType}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select an event" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='all-visitors'>All website visitors</SelectItem>
-                  <SelectItem value='pages-visitors'>People who visited specific web pages</SelectItem>
-                  <SelectItem value="time-visitors">Visitors by time spent</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-
             {fields.map((field, index) => (
-              <Fragment key={field.id}>
+              <section
+                key={field.id}
+                className="border border-1 px-4 py-2 rounded-lg relative"
+              >
+                {fields?.length > 1 && (
+                  <CircleX
+                    size={16}
+                    className="absolute top-3 right-4 text-red-500 cursor-pointer"
+                    onClick={() => handleRemoveRule(index)}
+                  />
+                )}
+                {index > 0 && (
+                  <h2 className="font-bold mb-4 text-md">
+                    {operatorValue === "and" ? "And" : "Or"}
+                  </h2>
+                )}
+                <FormField
+                  control={form.control}
+                  name={`customaudience_data.rule.inclusions.rules.${index}.event_sources.${0}.id`}
+                  render={({ field }) => (
+                    <FormItem className="mb-2">
+                      <FormLabel className="font-medium text-md">
+                        Source
+                      </FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select Source" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {pixels.map((pixel) => (
+                            <SelectItem key={pixel.id} value={pixel.id}>
+                              {pixel.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="space-y-2">
+                  <label className="font-medium text-md">Events</label>
+                  <Select
+                    onValueChange={(value: TEventType) => {
+                      setEventTypes(prev => ({
+                        ...prev,
+                        [index]: value,
+                      }));
+                      form.setValue(
+                        `customaudience_data.rule.inclusions.rules.${index}.filter.filters`,
+                        [
+                          {
+                            field: "",
+                            operator: "",
+                            value: [],
+                          },
+                        ]
+                      );
+                    }}
+                    defaultValue={eventTypes[index]}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select an event" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all-visitors">
+                        All website visitors
+                      </SelectItem>
+                      <SelectItem value="pages-visitors">
+                        People who visited specific web pages
+                      </SelectItem>
+                      <SelectItem value="time-visitors">
+                        Visitors by time spent
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <FormField
                   control={form.control}
                   name={`customaudience_data.rule.inclusions.rules.${index}.retention_seconds`}
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-medium text-md">Audience retention</FormLabel>
-                      <div className='flex gap-4 items-center'>
+                    <FormItem className="mt-2">
+                      <div className="flex gap-2 items-center">
+                        <FormLabel className="font-medium text-md">
+                          Audience retention
+                        </FormLabel>
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <Info size={16} />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <FormDescription>
+                              Enter Number between 1 and 180
+                            </FormDescription>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <div className="flex gap-4 items-center">
                         <FormControl>
                           <Input
-                            placeholder='Number of days'
-                            className='w-1/2'
-                            type='number'
+                            placeholder="Number of days"
+                            className="w-1/2"
+                            type="number"
                             min={1}
                             max={180}
                             {...field}
-                            onChange={e => {
+                            onChange={(e) => {
                               let value = Number(e.target.value);
                               if (value > 180) value = 180;
                               if (value < 1) value = 1;
@@ -426,48 +584,79 @@ const CreateAudienceDialog = ({ open, onOpenChange, handleSuccessfullState }: Cr
                             }}
                           />
                         </FormControl>
-                        <p className='font-medium'>Days</p>
+                        <p className="font-medium">Days</p>
                       </div>
-                      <FormDescription>Enter Number between 1 and 180</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                {eventType === 'time-visitors' && <FormField
-                  control={form.control}
-                  name={`customaudience_data.rule.inclusions.rules.${index}.filter.filters.${index + 1}.value`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-medium text-md">Percentile</FormLabel>
-                      <Select onValueChange={(value) => {
-                        field.onChange([value])
-                        form.setValue(`customaudience_data.rule.inclusions.rules.${index}.filter.filters.${index + 1}.field`, '')
-                        form.setValue(`customaudience_data.rule.inclusions.rules.${index}.filter.filters.${index + 1}.operator`, '')
-                      }}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="select an percentage" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="25">25%</SelectItem>
-                          <SelectItem value="10">10%</SelectItem>
-                          <SelectItem value="5">5%</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </FormItem>
-                  )}
-                />}
-                {eventType === 'time-visitors' && <p onClick={() => setEventType('pages-visitors')} className='text-[#1890ff] text-sm cursor-pointer hover:underline decoration-1'>+ Select specific web page(s)</p>}
-                {eventType === 'pages-visitors' && (
-                  <section className='bg-[#f5f6f7] p-4 rounded-lg'>
-                    <div className='flex gap-4'>
+
+                {eventTypes[index] === "time-visitors" && (
+                  <FormField
+                    control={form.control}
+                    name={`customaudience_data.rule.inclusions.rules.${index}.filter.filters.${
+                      index + 1
+                    }.value`}
+                    render={({ field }) => (
+                      <FormItem className="mt-2">
+                        <FormLabel className="font-medium text-md">
+                          Percentile
+                        </FormLabel>
+                        <Select
+                          onValueChange={(value) => {
+                            field.onChange([value]);
+                            form.setValue(
+                              `customaudience_data.rule.inclusions.rules.${index}.filter.filters.${
+                                index + 1
+                              }.field`,
+                              ""
+                            );
+                            form.setValue(
+                              `customaudience_data.rule.inclusions.rules.${index}.filter.filters.${
+                                index + 1
+                              }.operator`,
+                              ""
+                            );
+                          }}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="select an percentage" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="25">25%</SelectItem>
+                            <SelectItem value="10">10%</SelectItem>
+                            <SelectItem value="5">5%</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FormItem>
+                    )}
+                  />
+                )}
+
+                {eventTypes[index] === "time-visitors" && (
+                  <p
+                    onClick={() => setShowFilters(true)}
+                    className="text-[#1890ff] mt-2 text-sm cursor-pointer hover:underline decoration-1"
+                  >
+                    + Select specific web page(s)
+                  </p>
+                )}
+
+                {(eventTypes[index] === "pages-visitors" || showFilters) && (
+                  <section className="bg-[#f5f6f7] p-4 mt-2 rounded-lg">
+                    <div className="flex gap-4">
                       <FormField
                         control={form.control}
                         name={`customaudience_data.rule.inclusions.rules.${index}.filter.filters.${index}.field`}
                         render={({ field }) => (
-                          <FormItem className='w-3/5'>
-                            <Select onValueChange={field.onChange} value='url' disabled>
+                          <FormItem className="w-3/5">
+                            <Select
+                              onValueChange={field.onChange}
+                              value="url"
+                              disabled
+                            >
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue />
@@ -485,19 +674,29 @@ const CreateAudienceDialog = ({ open, onOpenChange, handleSuccessfullState }: Cr
                         control={form.control}
                         name={`customaudience_data.rule.inclusions.rules.${index}.filter.filters.${index}.operator`}
                         render={({ field }) => (
-                          <FormItem className='flex-1'>
-                            <Select onValueChange={(value) => {
-                              field.onChange(value)
-                              form.setValue(`customaudience_data.rule.inclusions.rules.${index}.filter.filters.${index}.field`, 'url')
-                            }} defaultValue={field.value}>
+                          <FormItem className="flex-1">
+                            <Select
+                              onValueChange={(value) => {
+                                field.onChange(value);
+                                form.setValue(
+                                  `customaudience_data.rule.inclusions.rules.${index}.filter.filters.${index}.field`,
+                                  "url"
+                                );
+                              }}
+                              defaultValue={field.value}
+                            >
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="select an operator" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="i_contains">contains</SelectItem>
-                                <SelectItem value="i_not_contains">doesn't contain</SelectItem>
+                                <SelectItem value="i_contains">
+                                  contains
+                                </SelectItem>
+                                <SelectItem value="i_not_contains">
+                                  doesn't contain
+                                </SelectItem>
                                 <SelectItem value="i_equals">equals</SelectItem>
                               </SelectContent>
                             </Select>
@@ -506,7 +705,7 @@ const CreateAudienceDialog = ({ open, onOpenChange, handleSuccessfullState }: Cr
                       />
                     </div>
 
-                    <div className='mt-2'>
+                    <div className="mt-2">
                       <FormField
                         control={form.control}
                         name={`customaudience_data.rule.inclusions.rules.${index}.filter.filters.${index}.value`}
@@ -527,28 +726,19 @@ const CreateAudienceDialog = ({ open, onOpenChange, handleSuccessfullState }: Cr
                     </div>
                   </section>
                 )}
-              </Fragment>
+              </section>
             ))}
 
+            {fields?.length < 5 && (
+              <Button variant="secondary" type="button" onClick={handleAddRule}>
+                {operatorValue === "and"
+                  ? "Narrow further"
+                  : "Include more people"}
+              </Button>
+            )}
 
-            <FormField
-              control={form.control}
-              name="customaudience_data.name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="font-medium text-md">Audience name</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="flex justify-between">
-              <Button onClick={handleClose} variant="outline">
+            <div className="flex justify-between !mt-8">
+              <Button onClick={handleBack} variant="outline">
                 Cancel
               </Button>
               {/* <Button
@@ -556,15 +746,19 @@ const CreateAudienceDialog = ({ open, onOpenChange, handleSuccessfullState }: Cr
                 variant="secondary"
                 onClick={() => {
                   console.log('Form errors:', form.formState.errors);
+                  console.log('from data: ', form.getValues());
                   toast.error('Check the console for form errors.');
                 }}
               >
                 Log Form Errors
               </Button> */}
               <Button
-                type='submit'
+                type="submit"
                 className="bg-[#ff7a59] hover:bg-[#ff7a59]/90 text-white"
-                disabled={form.formState.isSubmitting || !form.formState.isValid}
+                disabled={
+                  // form.formState.isSubmitting || !form.formState.isValid
+                  form.formState.isSubmitting
+                }
               >
                 {form.formState.isSubmitting ? (
                   <>
@@ -618,67 +812,67 @@ const CreateAudienceDialog = ({ open, onOpenChange, handleSuccessfullState }: Cr
           />
         </div> */}
       </div>
-    </>
+    </section>
   );
 
-  const renderLookalikeView = () => (
-    <>
-      <DialogHeader className="bg-brand-blue text-white px-4 py-4 flex flex-row items-center">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="mr-2 text-white hover:bg-brand-blue/80"
-          onClick={handleBack}
-        >
-          <ArrowLeft size={18} />
-        </Button>
-        <DialogTitle className="text-xl">Lookalike</DialogTitle>
-      </DialogHeader>
+  // const renderLookalikeView = () => (
+  //   <>
+  //     <DialogHeader className="bg-brand-blue text-white px-4 py-4 flex flex-row items-center">
+  //       <Button
+  //         variant="ghost"
+  //         size="icon"
+  //         className="mr-2 text-white hover:bg-brand-blue/80"
+  //         onClick={handleBack}
+  //       >
+  //         <ArrowLeft size={18} />
+  //       </Button>
+  //       <DialogTitle className="text-xl">Lookalike</DialogTitle>
+  //     </DialogHeader>
 
-      <div className="p-6 space-y-6">
-        <div className="space-y-2">
-          <label className="font-medium">Source audience</label>
-          <p className="text-sm text-blue-600 mb-2">
-            How does lookalike audience syncing work? <span className="underline">Learn more</span>
-          </p>
-          <Select onValueChange={(value) => handleInputChange('sourceAudience', value)}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select an audience" />
-            </SelectTrigger>
-            <SelectContent>
-              {audiencesData.map(audience => (
-                <SelectItem key={audience.id} value={audience.id}>
-                  {audience.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+  //     <div className="p-6 space-y-6">
+  //       <div className="space-y-2">
+  //         <label className="font-medium">Source audience</label>
+  //         <p className="text-sm text-blue-600 mb-2">
+  //           How does lookalike audience syncing work? <span className="underline">Learn more</span>
+  //         </p>
+  //         <Select onValueChange={(value) => handleInputChange('sourceAudience', value)}>
+  //           <SelectTrigger className="w-full">
+  //             <SelectValue placeholder="Select an audience" />
+  //           </SelectTrigger>
+  //           <SelectContent>
+  //             {audiencesData.map(audience => (
+  //               <SelectItem key={audience.id} value={audience.id}>
+  //                 {audience.name}
+  //               </SelectItem>
+  //             ))}
+  //           </SelectContent>
+  //         </Select>
+  //       </div>
 
-      </div>
+  //     </div>
 
-      <div className="border-t p-4 flex justify-between">
-        <Button onClick={handleClose} variant="outline">
-          Cancel
-        </Button>
-        <Button
-          className="bg-[#ff7a59] hover:bg-[#ff7a59]/90 text-white"
-          onClick={handleCreateAudience}
-          disabled={!formData.sourceAudience}
-        >
-          Create audience
-        </Button>
-      </div>
-    </>
-  );
+  //     <div className="border-t p-4 flex justify-between">
+  //       <Button onClick={handleClose} variant="outline">
+  //         Cancel
+  //       </Button>
+  //       <Button
+  //         className="bg-[#ff7a59] hover:bg-[#ff7a59]/90 text-white"
+  //         onClick={handleCreateAudience}
+  //         disabled={!formData.sourceAudience}
+  //       >
+  //         Create audience
+  //       </Button>
+  //     </div>
+  //   </>
+  // );
 
   const renderContent = () => {
     switch (currentView) {
-      case 'website-visitors':
+      case "website-visitors":
         return renderWebsiteVisitorsView();
-      case 'lookalike':
-        return renderLookalikeView();
-      case 'initial':
+      // case 'lookalike':
+      //   return renderLookalikeView();
+      case "initial":
       default:
         return renderInitialView();
     }
@@ -686,7 +880,7 @@ const CreateAudienceDialog = ({ open, onOpenChange, handleSuccessfullState }: Cr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="p-0 max-w-xl rounded-md overflow-hidden">
+      <DialogContent className="p-0 max-w-xl rounded-md overflow-auto">
         {renderContent()}
       </DialogContent>
     </Dialog>

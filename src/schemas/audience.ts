@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 export const audienceSchema = z.object({
-  pixel_id: z.string().min(1, 'choose one source'),
   account_id: z.string(),
   customaudience_data: z.object({
     name: z.string().min(1, 'please provide name').max(100, 'name should be less than 100 characters'),
@@ -12,10 +11,11 @@ export const audienceSchema = z.object({
           z.object({
             event_sources: z.array(
               z.object({
+                id: z.string().min(1, 'choose one source'),
                 type: z.literal("pixel"),
               })
             ),
-            retention_seconds: z.number(),
+            retention_seconds: z.union([z.number(), z.string()]),
             filter: z.object({
               operator: z.string().optional(),
               filters: z.array(
