@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  cliquify-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: cliquify-frontend
+    ports:
+      - "8020:8020"
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - cliquify-network
+
+networks:
+  cliquify-network:
+    driver: bridge
+
+volumes:
+  node_modules: 
