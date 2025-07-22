@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, CircleX, Info, X } from "lucide-react";
+import { ArrowLeft, CircleMinus, CircleX, Info, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -115,22 +115,37 @@ const CreateAudienceDialog = ({
     },
   });
 
-  const { fields, append, remove } = useFieldArray({
+  const {
+    fields: includeFields,
+    append: appendInclude,
+    remove: removeInclude,
+  } = useFieldArray({
     control: form.control,
     name: "customaudience_data.rule.inclusions.rules",
   });
 
+  const {
+    fields: excludeFields,
+    append: appendExclude,
+    remove: removeExclude,
+  } = useFieldArray({
+    control: form.control,
+    name: "customaudience_data.rule.exclusions.rules",
+  });
+
+  const allFields = includeFields?.length + excludeFields?.length;
+
   const handleAddRule = () => {
-    const rulesNumber = fields?.length;
-    if (rulesNumber < 5) {
-      append({
+    if (allFields < 5) {
+      appendInclude({
         event_sources: [
           {
+            id: "",
             type: "pixel",
           },
         ],
         filter: {
-          operator: "",
+          operator: "and",
           filters: [
             {
               field: "",
@@ -143,8 +158,35 @@ const CreateAudienceDialog = ({
     }
   };
 
-  const handleRemoveRule = (index: number) => {
-    remove(index);
+  const handleAddExcludeRule = () => {
+    if (allFields < 5) {
+      appendExclude({
+        event_sources: [
+          {
+            id: "",
+            type: "pixel",
+          },
+        ],
+        filter: {
+          operator: "and",
+          filters: [
+            {
+              field: "",
+              operator: "",
+              value: [],
+            },
+          ],
+        },
+      });
+    }
+  };
+
+  const handleRemoveIncludeRule = (index: number) => {
+    removeInclude(index);
+  };
+
+  const handleRemoveExcludeRule = (index: number) => {
+    removeExclude(index);
   };
 
   const { isDialogOpen, dialogState, showDialog, handleDialogClose } =
@@ -152,9 +194,14 @@ const CreateAudienceDialog = ({
 
   const handleBack = () => {
     setCurrentView("initial");
-    if (fields && fields.length > 1 && remove) {
-      for (let i = fields.length - 1; i > 0; i--) {
-        remove(i);
+    if (includeFields && includeFields.length > 1 && removeInclude) {
+      for (let i = includeFields.length - 1; i > 0; i--) {
+        removeInclude(i);
+      }
+    }
+    if (excludeFields && excludeFields.length > 0 && removeExclude) {
+      for (let i = excludeFields.length - 1; i >= 0; i--) {
+        removeExclude(i);
       }
     }
   };
@@ -233,7 +280,7 @@ const CreateAudienceDialog = ({
         >
           <div className="flex justify-between items-start">
             <h3 className="font-medium text-lg mb-1">Website visitors</h3>
-            <div className="flex gap-1">
+            {/* <div className="flex gap-1">
               <img
                 src="/lovable-uploads/d5f033f6-b183-4516-9513-cf2d1e501443.png"
                 alt="Meta"
@@ -249,7 +296,7 @@ const CreateAudienceDialog = ({
                 alt="Google"
                 className="w-6 h-6"
               />
-            </div>
+            </div> */}
           </div>
           <p className="text-gray-600">
             Nurture the people who've been to your site. Create an audience from
@@ -317,7 +364,8 @@ const CreateAudienceDialog = ({
                   // Convert retention_seconds and clean filters in one go
                   let newRule = {
                     ...rule,
-                    retention_seconds: Number(rule.retention_seconds) * 24 * 60 * 60,
+                    retention_seconds:
+                      Number(rule.retention_seconds) * 24 * 60 * 60,
                   };
                   if (rule.filter && Array.isArray(rule.filter.filters)) {
                     const cleanedFilters = rule.filter.filters.filter(
@@ -338,6 +386,14 @@ const CreateAudienceDialog = ({
           },
         },
       };
+    }
+
+    if (cleanedData.customaudience_data?.rule?.exclusions?.rules.length === 0) {
+      delete cleanedData.customaudience_data.rule.exclusions;
+    }
+
+    if (cleanedData.customaudience_data?.rule?.exclusions?.rules.length > 0) {
+      cleanedData.customaudience_data.rule.exclusions.operator = "or";
     }
 
     const res = await createAudience(cleanedData);
@@ -381,7 +437,6 @@ const CreateAudienceDialog = ({
       <div className="p-6 pt-4 space-y-6">
         <Form {...form}>
           <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
-
             <FormField
               control={form.control}
               name="account_id"
@@ -461,17 +516,18 @@ const CreateAudienceDialog = ({
               />
               <span>of the following criteria:</span>
             </div>
+            
 
-            {fields.map((field, index) => (
+            {includeFields.map((field, index) => (
               <section
                 key={field.id}
                 className="border border-1 px-4 py-2 rounded-lg relative"
               >
-                {fields?.length > 1 && (
+                {includeFields?.length > 1 && (
                   <CircleX
                     size={16}
                     className="absolute top-3 right-4 text-red-500 cursor-pointer"
-                    onClick={() => handleRemoveRule(index)}
+                    onClick={() => handleRemoveIncludeRule(index)}
                   />
                 )}
                 {index > 0 && (
@@ -513,7 +569,7 @@ const CreateAudienceDialog = ({
                   <label className="font-medium text-md">Events</label>
                   <Select
                     onValueChange={(value: TEventType) => {
-                      setEventTypes(prev => ({
+                      setEventTypes((prev) => ({
                         ...prev,
                         [index]: value,
                       }));
@@ -729,12 +785,305 @@ const CreateAudienceDialog = ({
               </section>
             ))}
 
-            {fields?.length < 5 && (
-              <Button variant="secondary" type="button" onClick={handleAddRule}>
-                {operatorValue === "and"
-                  ? "Narrow further"
-                  : "Include more people"}
-              </Button>
+            {allFields < 5 && (
+              <div className="flex gap-4 items-center mt-4">
+                <Button
+                  variant="secondary"
+                  type="button"
+                  onClick={handleAddRule}
+                >
+                  {operatorValue === "and"
+                    ? "Narrow further"
+                    : "Include more people"}
+                </Button>
+                <Button
+                  variant="secondary"
+                  type="button"
+                  onClick={handleAddExcludeRule}
+                >
+                  Exclude people
+                </Button>
+              </div>
+            )}
+
+            {excludeFields.length > 0 && (
+              <p className="flex items-center gap-2">
+                <CircleMinus size={16} />
+                Exclude people who meet any of the following criteria:
+                </p>
+            )}
+
+            {excludeFields.map((field, index) => (
+              <section
+                key={field.id}
+                className="border border-1 px-4 py-2 rounded-lg relative"
+              >
+                {allFields > 1 && (
+                  <CircleX
+                    size={16}
+                    className="absolute top-3 right-4 text-red-500 cursor-pointer"
+                    onClick={() => handleRemoveExcludeRule(index)}
+                  />
+                )}
+                {index > 0 && <h2 className="font-bold mb-4 text-md">Or</h2>}
+                <FormField
+                  control={form.control}
+                  name={`customaudience_data.rule.exclusions.rules.${index}.event_sources.${0}.id`}
+                  render={({ field }) => (
+                    <FormItem className="mb-2">
+                      <FormLabel className="font-medium text-md">
+                        Source
+                      </FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select Source" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {pixels.map((pixel) => (
+                            <SelectItem key={pixel.id} value={pixel.id}>
+                              {pixel.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="space-y-2">
+                  <label className="font-medium text-md">Events</label>
+                  <Select
+                    onValueChange={(value: TEventType) => {
+                      setEventTypes((prev) => ({
+                        ...prev,
+                        [index]: value,
+                      }));
+                      form.setValue(
+                        `customaudience_data.rule.exclusions.rules.${index}.filter.filters`,
+                        [
+                          {
+                            field: "",
+                            operator: "",
+                            value: [],
+                          },
+                        ]
+                      );
+                    }}
+                    defaultValue={eventTypes[index]}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select an event" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all-visitors">
+                        All website visitors
+                      </SelectItem>
+                      <SelectItem value="pages-visitors">
+                        People who visited specific web pages
+                      </SelectItem>
+                      <SelectItem value="time-visitors">
+                        Visitors by time spent
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name={`customaudience_data.rule.exclusions.rules.${index}.retention_seconds`}
+                  render={({ field }) => (
+                    <FormItem className="mt-2">
+                      <div className="flex gap-2 items-center">
+                        <FormLabel className="font-medium text-md">
+                          Audience retention
+                        </FormLabel>
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <Info size={16} />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <FormDescription>
+                              Enter Number between 1 and 180
+                            </FormDescription>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <div className="flex gap-4 items-center">
+                        <FormControl>
+                          <Input
+                            placeholder="Number of days"
+                            className="w-1/2"
+                            type="number"
+                            min={1}
+                            max={180}
+                            {...field}
+                            onChange={(e) => {
+                              let value = Number(e.target.value);
+                              if (value > 180) value = 180;
+                              if (value < 1) value = 1;
+                              field.onChange(value);
+                            }}
+                          />
+                        </FormControl>
+                        <p className="font-medium">Days</p>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {eventTypes[index] === "time-visitors" && (
+                  <FormField
+                    control={form.control}
+                    name={`customaudience_data.rule.exclusions.rules.${index}.filter.filters.${
+                      index + 1
+                    }.value`}
+                    render={({ field }) => (
+                      <FormItem className="mt-2">
+                        <FormLabel className="font-medium text-md">
+                          Percentile
+                        </FormLabel>
+                        <Select
+                          onValueChange={(value) => {
+                            field.onChange([value]);
+                            form.setValue(
+                              `customaudience_data.rule.exclusions.rules.${index}.filter.filters.${
+                                index + 1
+                              }.field`,
+                              ""
+                            );
+                            form.setValue(
+                              `customaudience_data.rule.exclusions.rules.${index}.filter.filters.${
+                                index + 1
+                              }.operator`,
+                              ""
+                            );
+                          }}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="select an percentage" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="25">25%</SelectItem>
+                            <SelectItem value="10">10%</SelectItem>
+                            <SelectItem value="5">5%</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FormItem>
+                    )}
+                  />
+                )}
+
+                {eventTypes[index] === "time-visitors" && (
+                  <p
+                    onClick={() => setShowFilters(true)}
+                    className="text-[#1890ff] mt-2 text-sm cursor-pointer hover:underline decoration-1"
+                  >
+                    + Select specific web page(s)
+                  </p>
+                )}
+
+                {(eventTypes[index] === "pages-visitors" || showFilters) && (
+                  <section className="bg-[#f5f6f7] p-4 mt-2 rounded-lg">
+                    <div className="flex gap-4">
+                      <FormField
+                        control={form.control}
+                        name={`customaudience_data.rule.exclusions.rules.${index}.filter.filters.${index}.field`}
+                        render={({ field }) => (
+                          <FormItem className="w-3/5">
+                            <Select
+                              onValueChange={field.onChange}
+                              value="url"
+                              disabled
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="url">URL</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name={`customaudience_data.rule.exclusions.rules.${index}.filter.filters.${index}.operator`}
+                        render={({ field }) => (
+                          <FormItem className="flex-1">
+                            <Select
+                              onValueChange={(value) => {
+                                field.onChange(value);
+                                form.setValue(
+                                  `customaudience_data.rule.exclusions.rules.${index}.filter.filters.${index}.field`,
+                                  "url"
+                                );
+                              }}
+                              defaultValue={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="select an operator" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="i_contains">
+                                  contains
+                                </SelectItem>
+                                <SelectItem value="i_not_contains">
+                                  doesn't contain
+                                </SelectItem>
+                                <SelectItem value="i_equals">equals</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="mt-2">
+                      <FormField
+                        control={form.control}
+                        name={`customaudience_data.rule.exclusions.rules.${index}.filter.filters.${index}.value`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <MultiValueInput
+                                value={field.value || []}
+                                onChange={field.onChange}
+                                onBlur={field.onBlur}
+                                placeholder="Type a value and press Enter"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </section>
+                )}
+              </section>
+            ))}
+
+            {allFields < 5 && excludeFields.length > 0 && (
+              <Button
+                  variant="secondary"
+                  type="button"
+                  onClick={handleAddExcludeRule}
+                >
+                  Exclude people
+                </Button>
             )}
 
             <div className="flex justify-between !mt-8">
@@ -745,9 +1094,9 @@ const CreateAudienceDialog = ({
                 type="button"
                 variant="secondary"
                 onClick={() => {
-                  console.log('Form errors:', form.formState.errors);
-                  console.log('from data: ', form.getValues());
-                  toast.error('Check the console for form errors.');
+                  console.log("Form errors:", form.formState.errors);
+                  console.log("from data: ", form.getValues());
+                  toast.error("Check the console for form errors.");
                 }}
               >
                 Log Form Errors
@@ -756,8 +1105,7 @@ const CreateAudienceDialog = ({
                 type="submit"
                 className="bg-[#ff7a59] hover:bg-[#ff7a59]/90 text-white"
                 disabled={
-                  // form.formState.isSubmitting || !form.formState.isValid
-                  form.formState.isSubmitting
+                  form.formState.isSubmitting || !form.formState.isValid
                 }
               >
                 {form.formState.isSubmitting ? (

@@ -28,6 +28,30 @@ export const audienceSchema = z.object({
             }),
           })
         ),
+      }),
+      exclusions: z.object({
+        operator: z.string().optional(),
+        rules: z.array(
+          z.object({
+            event_sources: z.array(
+              z.object({
+                id: z.string().min(1, 'choose one source'),
+                type: z.literal("pixel"),
+              })
+            ),
+            retention_seconds: z.union([z.number(), z.string()]),
+            filter: z.object({
+              operator: z.string().optional(),
+              filters: z.array(
+                z.object({
+                  field: z.string().optional(),
+                  operator: z.string().optional(),
+                  value: z.array(z.string()).optional(),
+                })
+              ),
+            }),
+          })
+        ),
       })
     })
   }),
