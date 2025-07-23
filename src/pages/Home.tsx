@@ -1,16 +1,9 @@
-import React from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Link, NavLink } from "react-router-dom";
-import Logo from "@/assets/logo.svg";
-import OtoLogo from "@/assets/otomatika-logo.svg"
-import HeroImg from "@/assets/Illustration.svg";
-import AudioIcon from "@/assets/audio.svg";
-import LandImg from "@/assets/land.svg";
-import TargetImg from "@/assets/target.svg";
 import { cn } from "@/lib/utils";
+import { Link, NavLink } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import {AudioIcon, HeroImg, LandImg, Logo, OtoLogo, TargetImg} from "@/assets"
 
-const HomePage: React.FC = () => {
+const HomePage = () => {
   return (
     <div className="container min-h-screen flex flex-col bg-background text-foreground px-[60px] py-12">
       <header className="flex items-center justify-between">
