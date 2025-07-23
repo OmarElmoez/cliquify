@@ -13,6 +13,7 @@ import {
 import { ArrowUp, ArrowDown } from "@/assets";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const PrivacyPolicy = () => {
   const [expandedSections, setExpandedSections] = useState({});
@@ -138,7 +139,13 @@ const PrivacyPolicy = () => {
         </p>
       </div> */}
       <section className="max-w-[628px]">
-        <h1 className="font-bold text-[64px]">
+        <button className="text-lg text-grayColor border border-[#BBCFDD] rounded-lg w-[130px] h-[48px]">
+          <Link to="/" className="flex items-center justify-center gap-2">
+            <MoveLeft />
+            Back
+          </Link>
+        </button>
+        <h1 className="font-bold text-[64px] mt-6">
           <span className="text-mainColor">Cliquify</span> Privacy Policy
         </h1>
         <p className="font-medium text-lg text-grayColor">
