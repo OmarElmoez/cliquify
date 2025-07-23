@@ -49,6 +49,8 @@
     --sidebar-border: 220 13% 91%;
 
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    --blackColor: #1A1A1A;
   }
 
   .dark {
@@ -100,9 +102,20 @@
   }
 }
 
+
 label[data-required="true"]::after {
   content: " *";
   color: #ef4444;
   font-weight: bold;
   font-size: medium;
+}
+
+html {
+  font-family: 'Inter', sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-size: 16px;
+  color: var(--blackColor);
+  font-style: normal;
+  scroll-behavior: smooth;
 }

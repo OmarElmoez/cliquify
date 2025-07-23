@@ -1,89 +1,133 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Link } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
+import Logo from "@/assets/logo.svg";
+import OtoLogo from "@/assets/otomatika-logo.svg"
+import HeroImg from "@/assets/Illustration.svg";
+import AudioIcon from "@/assets/audio.svg";
+import LandImg from "@/assets/land.svg";
+import TargetImg from "@/assets/target.svg";
+import { cn } from "@/lib/utils";
 
 const HomePage: React.FC = () => {
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground">
+    <div className="container min-h-screen flex flex-col bg-background text-foreground px-[60px] py-12">
+      <header className="flex items-center justify-between">
+        <div className="shrink-0">
+          <img src={Logo} alt="cliquify logo" />
+        </div>
+
+        <nav className="flex items-center gap-8">
+          <NavLink
+            to="/"
+            end
+            className={({ isActive }) =>
+              cn(
+                isActive
+                  ? "border-b-4 border-mainColor font-semibold text-xl text-blackColor"
+                  : ""
+              )
+            }
+          >
+            Home
+          </NavLink>
+          <a
+            href="#our-vision"
+            className="font-semibold text-xl text-grayColor hover:border-b-4 hover:border-mainColor"
+          >
+            Our Vision
+          </a>
+        </nav>
+
+        <Button
+          asChild
+          className="bg-mainColor hover:bg-mainColor text-white text-xl font-semibold w-[180px] h-[54px] rounded-lg"
+        >
+          <Link to="/sign-in">Get started Now</Link>
+        </Button>
+      </header>
+
       {/* Hero Section */}
-      <section className="relative w-full bg-gradient-to-br from-primary/10 to-muted py-20 flex flex-col items-center justify-center">
-        <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/20 via-transparent to-transparent"></div>
-        <div className="relative z-10 max-w-2xl w-full px-4 text-center">
-          <h1 className="text-4xl md:text-5xl font-extrabold mb-4 tracking-tight">
-            Manage Your Ads Effortlessly with <span className="text-primary text-blue-400">Cliquify</span>
+      <section className="flex justify-between items-center gap-4 mt-20">
+        <div className="max-w-[596px] flex flex-col gap-8">
+          <h1 className="text-[54px] font-medium font-rubik">
+            <div className="inline-flex">
+              <img src={AudioIcon} alt="microphone" />
+            </div>{" "}
+            <span className="font-semibold text-secondaryColor">Unleash</span>{" "}
+            your ads with the new{" "}
+            <span className="text-mainColor">Cliquify</span> feature!
           </h1>
-          <p className="text-lg md:text-xl text-muted-foreground mb-8">
-            All your advertising campaigns, analytics, and optimizations in one powerful platform.
+          <p className="text-xl text-grayColor">
+            Create, manage, and track your ad campaigns—all in one place, right
+            inside Cliquify.
           </p>
-          <Button asChild size="lg" className="px-8 py-6 text-base font-semibold">
-            <Link to="/sign-in">Get Started</Link>
+          <Button
+            asChild
+            className="bg-mainColor hover:bg-mainColor text-white text-xl font-semibold w-[160px] h-[54px] rounded-lg"
+          >
+            <Link to="/sign-in">Sign in Now</Link>
           </Button>
         </div>
-      </section>
 
-      {/* Features Section */}
-      <section className="max-w-5xl w-full mx-auto mt-20 px-4 grid grid-cols-1 md:grid-cols-3 gap-8">
-        <Card className="flex flex-col items-center p-6 shadow-lg border-0 bg-muted/60">
-          <span className="text-3xl mb-3">📊</span>
-          <CardTitle className="font-semibold text-lg mb-2">Centralized Dashboard</CardTitle>
-          <CardContent className="p-0">
-            <p className="text-sm text-center text-muted-foreground">
-              View and manage all your ad campaigns from a single, easy-to-use dashboard.
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="flex flex-col items-center p-6 shadow-lg border-0 bg-muted/60">
-          <span className="text-3xl mb-3">⚡</span>
-          <CardTitle className="font-semibold text-lg mb-2">Real-Time Analytics</CardTitle>
-          <CardContent className="p-0">
-            <p className="text-sm text-center text-muted-foreground">
-              Get instant insights and analytics to optimize your ad performance.
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="flex flex-col items-center p-6 shadow-lg border-0 bg-muted/60">
-          <span className="text-3xl mb-3">🔒</span>
-          <CardTitle className="font-semibold text-lg mb-2">Secure & Private</CardTitle>
-          <CardContent className="p-0">
-            <p className="text-sm text-center text-muted-foreground">
-              Your data is protected with industry-leading security and privacy standards.
-            </p>
-          </CardContent>
-        </Card>
-      </section>
-
-      {/* About Section */}
-      <section className="max-w-3xl w-full mx-auto mt-20 px-4 text-center">
-        <h2 className="text-2xl md:text-3xl font-bold mb-4">Why Choose Cliquify?</h2>
-        <p className="text-muted-foreground text-base md:text-lg mb-6">
-          Our platform is designed to save you time and maximize your advertising ROI. Whether you're a small business or a large enterprise, Cliquify adapts to your needs and grows with you.
-        </p>
-        <div className="flex flex-col md:flex-row gap-6 justify-center mt-8">
-          <div className="flex-1 bg-muted rounded-lg p-6 shadow">
-            <h3 className="font-semibold text-lg mb-2">Easy Integration</h3>
-            <p className="text-sm text-muted-foreground">
-              Connect your favorite ad networks and tools in minutes.
-            </p>
-          </div>
-          <div className="flex-1 bg-muted rounded-lg p-6 shadow">
-            <h3 className="font-semibold text-lg mb-2">Customizable Reports</h3>
-            <p className="text-sm text-muted-foreground">
-              Generate detailed reports tailored to your business needs.
-            </p>
-          </div>
+        <div className="flex shrink-0">
+          <img src={HeroImg} alt="dashboard image" />
         </div>
       </section>
 
-      {/* Call to Action Section */}
-      <section className="w-full mt-20 py-12 bg-primary/10 flex flex-col items-center">
-        <h2 className="text-2xl md:text-3xl font-bold mb-4 text-primary">Ready to simplify your ad management?</h2>
-        <Button asChild size="lg" className="px-8 py-6 text-base font-semibold">
-          <Link to="/sign-in">Start Now</Link>
-        </Button>
+      {/* Numbers Section */}
+      <article className="mt-[88px] flex gap-12 items-center justify-center [&>div>h3]:text-secondaryColor [&>div>h3]:text-[40px] [&>div>h3]:text-center [&>div>h3]:font-semibold [&>div>h3]:mb-4 [&>div>p]:text-2xl [&>div>p]:text-grayColor">
+        <div>
+          <h3>7,500+</h3>
+          <p>ad campaigns</p>
+        </div>
+        <div>
+          <h3> 1,200+</h3>
+          <p>Trusted marketers</p>
+        </div>
+        <div>
+          <h3> 22+</h3>
+          <p>countries</p>
+        </div>
+      </article>
+
+      {/* Our Vision */}
+      <section
+        id="our-vision"
+        className="mt-[88px] flex justify-between items-start gap-4"
+      >
+        {/* vision Text */}
+        <div className="max-w-[630px] flex flex-col gap-8">
+          <div className="w-[154px] h-12 flex items-center justify-center rounded-full bg-secondaryColor shadow text-white text-xl font-semibold">
+            Our vision
+          </div>
+          <h2 className="font-rubik font-medium text-blackColor text-[54px]">
+            <div className="inline-flex">
+              <img src={TargetImg} alt="arrow hit the target" />
+            </div>{" "}
+            Boom! Your <span className="text-mainColor">Ads</span> Start{" "}
+            <span className="text-secondaryColor">Now</span>
+          </h2>
+          <p className="text-xl text-grayColor">
+            At Cliquify, we’re redefining modern advertising. Our vision is to
+            build an intelligent, all-in-one platform
+          </p>
+          <Button
+            asChild
+            className="bg-mainColor hover:bg-mainColor text-white text-xl font-semibold w-[160px] h-[54px] rounded-lg"
+          >
+            <Link to="/sign-in">Join us Now</Link>
+          </Button>
+        </div>
+
+        {/* vision Img */}
+        <div className="flex shrink-0">
+          <img src={LandImg} alt="world land" />
+        </div>
       </section>
 
-      <footer className="w-full py-4 border-t flex justify-center gap-8 bg-muted">
+      {/* <footer className="mt-[88px]">
         <Link
           to="/privacy-policy"
           className="text-sm text-muted-foreground hover:underline"
@@ -96,6 +140,62 @@ const HomePage: React.FC = () => {
         >
           Terms of Service
         </Link>
+      </footer> */}
+
+      <footer className="mt-[88px] flex items-start gap-[26px] [&>div:not(:first-child)]:flex-1">
+        <div className="flex shrink-0 min-w-[298px]">
+          <img src={Logo} alt="cliquify logo" />
+        </div>
+
+        <div>
+          <ul className="space-y-2">
+            <li>
+              <Link to="/" className="text-lg font-semibold hover:underline">
+                Home
+              </Link>
+            </li>
+            <li>
+              <a
+                href="#our-vision"
+                className="font-medium text-grayColor hover:underline"
+              >
+                Our Vision
+              </a>
+            </li>
+            <li>
+              <Link to="/" className="font-medium text-grayColor hover:underline">
+                Data Deletion
+              </Link>
+            </li>
+          </ul>
+        </div>
+
+        <div>
+          <ul className="space-y-2">
+            <li>
+              <Link to="/" className="text-lg font-semibold hover:underline">
+                About Us
+              </Link>
+            </li>
+            <li>
+              <Link to="/privacy-policy" className="font-medium text-grayColor hover:underline">
+                Privacy Policy
+              </Link>
+            </li>
+            <li>
+              <Link to="/terms-of-services" className="font-medium text-grayColor hover:underline">
+                Terms of Service
+              </Link>
+            </li>
+          </ul>
+        </div>
+
+        <div>
+          <div className="flex shrink-0 mb-4">
+            <img src={OtoLogo} alt="otomatika logo" />
+          </div>
+          <p className="font-medium text-lg">developed by <a href="https://www.otomatika.tech/" className="text-secondaryColor">otomatika</a></p>
+        </div>
       </footer>
     </div>
   );

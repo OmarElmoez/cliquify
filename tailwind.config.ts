@@ -18,7 +18,14 @@ export default {
       }
     },
     extend: {
+      fontFamily: {
+        rubik: ['Rubik', 'sans-serif'],
+      },
       colors: {
+        mainColor: '#FF017D',
+        secondaryColor: '#6051FF',
+        grayColor: '#495057',
+        blackColor: '#1A1A1A',
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
@@ -79,7 +86,7 @@ export default {
       borderRadius: {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)'
+        sm: 'calc(var(--radius) - 4px)',
       },
       keyframes: {
         'accordion-down': {
