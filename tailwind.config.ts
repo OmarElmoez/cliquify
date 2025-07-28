@@ -25,6 +25,8 @@ export default {
         mainColor: '#FF017D',
         secondaryColor: '#6051FF',
         grayColor: '#495057',
+        lightGrayColor: 'var(--lightGrayColor)',
+        iconColor: '#767EAD',
         blackColor: '#1A1A1A',
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',

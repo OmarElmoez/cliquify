@@ -5,7 +5,7 @@ import {AudioIcon, HeroImg, LandImg, Logo, OtoLogo, TargetImg} from "@/assets"
 
 const HomePage = () => {
   return (
-    <div className="container min-h-screen flex flex-col bg-background text-foreground px-[60px] py-12">
+    <div className="container min-h-screen flex flex-col text-foreground px-[60px] py-12">
       <header className="flex items-center justify-between">
         <div className="shrink-0">
           <img src={Logo} alt="cliquify logo" />

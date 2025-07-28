@@ -246,8 +246,12 @@ export const BudgetScheduling = ({
             type="submit"
             disabled={control._formState?.isSubmitting}
             onClick={() => {
-              startData.date && setValue('adset_data.start_time', `${startData.date}, ${startData.time}`);
-              endData.date && setValue('adset_data.end_time', `${endData.date}, ${endData.time}`);
+              if (startData.date) {
+                setValue('adset_data.start_time', `${startData.date}, ${startData.time}`);
+              }
+              if (endData.date) {
+                setValue('adset_data.end_time', `${endData.date}, ${endData.time}`);
+              }
             }}
           >
             {control._formState?.isSubmitting ? (

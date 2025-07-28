@@ -1,4 +1,4 @@
-const countries = [
+const COUNTRIES = [
   { label: "United States", value: "US" },
   { label: "Canada", value: "CA" },
   { label: "United Kingdom", value: "GB" },
@@ -22,4 +22,4 @@ const countries = [
   // Add more countries as needed
 ];
 
-export default countries;
+export default COUNTRIES;

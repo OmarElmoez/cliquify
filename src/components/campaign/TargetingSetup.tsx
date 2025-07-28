@@ -1,13 +1,19 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import  { getAdsets, Adset } from '@/services/adsets';
-import MultiSelect from "@/components/shared/MultiSelect"
-import countries from '@/data/countries';
-import { CampaignData } from '@/schemas/campaignSchema';
-import { Control, UseFormSetValue, useWatch } from 'react-hook-form';
+import { getAdsets, Adset } from "@/services/adsets";
+import MultiSelect from "@/components/shared/MultiSelect";
+import { COUNTRIES } from "@/constants";
+import { CampaignData } from "@/schemas/campaignSchema";
+import { Control, UseFormSetValue, useWatch } from "react-hook-form";
 import {
   FormControl,
   FormDescription,
@@ -16,11 +22,11 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { ChevronRight } from 'lucide-react';
-import { Button } from '../ui/button';
-import OBJECTIVES from '@/data/objectives';
-import getOptimizationGoals from '@/services/optimization-goals';
-import { cn } from '@/lib/utils';
+import { ChevronRight } from "lucide-react";
+import { Button } from "../ui/button";
+import OBJECTIVES from "@/constants/objectives";
+import getOptimizationGoals from "@/services/optimization-goals";
+import { cn } from "@/lib/utils";
 
 interface TargetingSetupProps {
   campaign: CampaignData;
@@ -29,9 +35,9 @@ interface TargetingSetupProps {
   handleNextStep: () => void;
   selectedObjective: string;
   campaignType: string;
-  updateAdsetType: (value: 'new' | 'existing') => void;
+  updateAdsetType: (value: "new" | "existing") => void;
   adsetType: string;
-  setValue: UseFormSetValue<CampaignData>
+  setValue: UseFormSetValue<CampaignData>;
 }
 
 // Age options for dropdowns
@@ -46,17 +52,15 @@ export const TargetingSetup: React.FC<TargetingSetupProps> = ({
   campaignType,
   updateAdsetType,
   adsetType,
-  setValue
+  setValue,
 }) => {
-
   const [adsets, setAdsets] = useState<Adset[]>([]);
-  const [bidValue, setBidValue] = useState('');
+  const [bidValue, setBidValue] = useState("");
   // const [adsetType, setAdsetType] = useState<'new' | 'existing'>('new');
-  const [selectedOptimizationGoal, setSelectedOptimizationGoal] = useState('')
-  const [optimizationGoals, setOptimizationGoals] = useState<string[]>([])
+  const [selectedOptimizationGoal, setSelectedOptimizationGoal] = useState("");
+  const [optimizationGoals, setOptimizationGoals] = useState<string[]>([]);
 
   // const relattedOptimizationGoals = selectedObjective && OBJECTIVES.filter(objective => objective.title === selectedObjective)[0]?.optimizationGoals || []
-
 
   useEffect(() => {
     const fetchAdsets = async () => {
@@ -64,22 +68,24 @@ export const TargetingSetup: React.FC<TargetingSetupProps> = ({
         const res = await getAdsets({ campaign_id: campaign.campaign_id });
         setAdsets(res.response);
       } catch (error) {
-        console.error('Error fetching adsets:', error);
+        console.error("Error fetching adsets:", error);
       }
     };
 
     const fetchOptimizationGoals = async () => {
       try {
-        const res = await getOptimizationGoals({ objective: campaign.campaign_data.objective });
+        const res = await getOptimizationGoals({
+          objective: campaign.campaign_data.objective,
+        });
         setOptimizationGoals(res.optimization_goals);
       } catch (error) {
-        console.error('Error fetching optimization goals:', error);
+        console.error("Error fetching optimization goals:", error);
       }
     };
     if (campaign.campaign_id) {
       fetchAdsets();
     }
-    fetchOptimizationGoals()
+    fetchOptimizationGoals();
   }, []);
 
   return (
@@ -90,25 +96,37 @@ export const TargetingSetup: React.FC<TargetingSetupProps> = ({
         <div className="space-y-6 bg-white p-6 rounded-md border">
           <RadioGroup
             value={adsetType}
-            onValueChange={(value: 'new' | 'existing') => updateAdsetType(value)}
+            onValueChange={(value: "new" | "existing") =>
+              updateAdsetType(value)
+            }
             className="flex flex-col space-y-4"
           >
             <div className="flex items-center space-x-8">
-              {campaignType !== 'new' && 
+              {campaignType !== "new" && (
+                <div className="flex justify-center items-center space-x-2">
+                  <RadioGroupItem
+                    value="existing"
+                    id="existing"
+                    className="mt-1"
+                  />
+                  <Label htmlFor="existing" className="font-medium">
+                    Use a saved adset
+                  </Label>
+                </div>
+              )}
+
               <div
                 className="flex justify-center items-center space-x-2"
-                >
-                <RadioGroupItem value="existing" id="existing" className="mt-1" />
-                <Label htmlFor="existing" className="font-medium">Use a saved adset</Label>
-              </div>}
-
-              <div className="flex justify-center items-center space-x-2" onClick={() => setValue('adset_id', '')}>
+                onClick={() => setValue("adset_id", "")}
+              >
                 <RadioGroupItem value="new" id="new" className="mt-1" />
-                <Label htmlFor="new" className="font-medium">Create a new adset</Label>
+                <Label htmlFor="new" className="font-medium">
+                  Create a new adset
+                </Label>
               </div>
             </div>
 
-            {adsetType === 'existing' && (
+            {adsetType === "existing" && (
               <div className="mt-4 pl-6">
                 {adsets && adsets.length > 0 ? (
                   <FormField
@@ -117,15 +135,21 @@ export const TargetingSetup: React.FC<TargetingSetupProps> = ({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Select Saved Adset</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select a saved adset" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {adsets.map(adset => (
-                              <SelectItem key={adset.adset_id} value={adset.adset_id}>
+                            {adsets.map((adset) => (
+                              <SelectItem
+                                key={adset.adset_id}
+                                value={adset.adset_id}
+                              >
                                 {adset.name}
                               </SelectItem>
                             ))}
@@ -137,9 +161,26 @@ export const TargetingSetup: React.FC<TargetingSetupProps> = ({
                   />
                 ) : (
                   <div className="flex items-center gap-2 bg-yellow-50 border border-yellow-200 rounded-md px-4 py-3 text-yellow-800 text-sm">
-                    <svg className="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01" />
+                    <svg
+                      className="w-5 h-5 text-yellow-400"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        fill="none"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M12 8v4m0 4h.01"
+                      />
                     </svg>
                     <span>No saved adsets available for this campaign.</span>
                   </div>
@@ -147,7 +188,7 @@ export const TargetingSetup: React.FC<TargetingSetupProps> = ({
               </div>
             )}
 
-            {adsetType === 'new' && (
+            {adsetType === "new" && (
               <div className="space-y-6 mt-4 pl-6">
                 {/* Adset Name */}
                 <FormField
@@ -155,12 +196,9 @@ export const TargetingSetup: React.FC<TargetingSetupProps> = ({
                   name="adset_data.name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel data-required='true'>Name</FormLabel>
+                      <FormLabel data-required="true">Name</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="Enter adset name"
-                          {...field}
-                        />
+                        <Input placeholder="Enter adset name" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -174,7 +212,10 @@ export const TargetingSetup: React.FC<TargetingSetupProps> = ({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Status</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select status" />
@@ -196,19 +237,26 @@ export const TargetingSetup: React.FC<TargetingSetupProps> = ({
                   name="adset_data.optimization_goal"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel data-required='true'>Optimization Goal</FormLabel>
-                      <Select onValueChange={(value) => {
-                        field.onChange(value);
-                        setSelectedOptimizationGoal(value)
-                      }} defaultValue={field.value}>
+                      <FormLabel data-required="true">
+                        Optimization Goal
+                      </FormLabel>
+                      <Select
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          setSelectedOptimizationGoal(value);
+                        }}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select optimization goal" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {optimizationGoals?.map(goal => (
-                            <SelectItem value={goal} key={goal}>{goal}</SelectItem>
+                          {optimizationGoals?.map((goal) => (
+                            <SelectItem value={goal} key={goal}>
+                              {goal}
+                            </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -223,21 +271,52 @@ export const TargetingSetup: React.FC<TargetingSetupProps> = ({
                   name="adset_data.billing_event"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel data-required='true'>Billing Event</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormLabel data-required="true">Billing Event</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select billing event" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="IMPRESSIONS">IMPRESSIONS</SelectItem>
-                          {selectedOptimizationGoal === "LINK_CLICKS" && <SelectItem value="LINK_CLICKS">LINK CLICKS</SelectItem>}
-                          {selectedOptimizationGoal === "PAGE_LIKES" && <SelectItem value="PAGE_LIKES">PAGE LIKES</SelectItem>}
-                          {selectedOptimizationGoal === "POST_ENGAGEMENT" && <SelectItem value="POST_ENGAGEMENT">POST ENGAGEMENT</SelectItem>}
-                          {selectedOptimizationGoal === "POST_ENGAGEMENT" && <SelectItem value="POST_ENGAGEMENT">Post ENGAGEMENT</SelectItem>}
-                          {selectedOptimizationGoal === 'TWO_SECOND_CONTINUOUS_VIDEO_VIEWS' && <SelectItem value="VIDEO_VIEWS">VIDEO VIEWS</SelectItem>}
-                          {selectedOptimizationGoal === 'TWO_SECOND_CONTINUOUS_VIDEO_VIEWS' && <SelectItem value='TWO_SECOND_CONTINUOUS_VIDEO_VIEWS'>TWO SECOND CONTINUOUS VIDEO VIEWS</SelectItem>}
+                          <SelectItem value="IMPRESSIONS">
+                            IMPRESSIONS
+                          </SelectItem>
+                          {selectedOptimizationGoal === "LINK_CLICKS" && (
+                            <SelectItem value="LINK_CLICKS">
+                              LINK CLICKS
+                            </SelectItem>
+                          )}
+                          {selectedOptimizationGoal === "PAGE_LIKES" && (
+                            <SelectItem value="PAGE_LIKES">
+                              PAGE LIKES
+                            </SelectItem>
+                          )}
+                          {selectedOptimizationGoal === "POST_ENGAGEMENT" && (
+                            <SelectItem value="POST_ENGAGEMENT">
+                              POST ENGAGEMENT
+                            </SelectItem>
+                          )}
+                          {selectedOptimizationGoal === "POST_ENGAGEMENT" && (
+                            <SelectItem value="POST_ENGAGEMENT">
+                              Post ENGAGEMENT
+                            </SelectItem>
+                          )}
+                          {selectedOptimizationGoal ===
+                            "TWO_SECOND_CONTINUOUS_VIDEO_VIEWS" && (
+                            <SelectItem value="VIDEO_VIEWS">
+                              VIDEO VIEWS
+                            </SelectItem>
+                          )}
+                          {selectedOptimizationGoal ===
+                            "TWO_SECOND_CONTINUOUS_VIDEO_VIEWS" && (
+                            <SelectItem value="TWO_SECOND_CONTINUOUS_VIDEO_VIEWS">
+                              TWO SECOND CONTINUOUS VIDEO VIEWS
+                            </SelectItem>
+                          )}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -251,21 +330,30 @@ export const TargetingSetup: React.FC<TargetingSetupProps> = ({
                   name="adset_data.bid_strategy"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel data-required='true'>Bid Strategy</FormLabel>
-                      <Select onValueChange={(value) => {
-                        field.onChange(value)
-                        setBidValue(value)
-                      }} defaultValue={field.value}>
+                      <FormLabel data-required="true">Bid Strategy</FormLabel>
+                      <Select
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          setBidValue(value);
+                        }}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select bid strategy" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="LOWEST_COST_WITHOUT_CAP">Lowest Cost Without Cap</SelectItem>
+                          <SelectItem value="LOWEST_COST_WITHOUT_CAP">
+                            Lowest Cost Without Cap
+                          </SelectItem>
                           <SelectItem value="COST_CAP">Cost Cap</SelectItem>
-                          <SelectItem value="LOWEST_COST_WITH_MIN_ROAS">Lowest Cost With Min ROAS</SelectItem>
-                          <SelectItem value="LOWEST_COST_WITH_BID_CAP">Lowest Cost With Bid Cap</SelectItem>
+                          <SelectItem value="LOWEST_COST_WITH_MIN_ROAS">
+                            Lowest Cost With Min ROAS
+                          </SelectItem>
+                          <SelectItem value="LOWEST_COST_WITH_BID_CAP">
+                            Lowest Cost With Bid Cap
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -274,24 +362,26 @@ export const TargetingSetup: React.FC<TargetingSetupProps> = ({
                 />
 
                 {/* Bid Amount */}
-                {bidValue && bidValue !== "LOWEST_COST_WITHOUT_CAP" && <FormField
-                  control={control}
-                  name="adset_data.bid_amount"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel data-required='true'>Bid Amount</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min={0}
-                          placeholder="Enter bid amount"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />}
+                {bidValue && bidValue !== "LOWEST_COST_WITHOUT_CAP" && (
+                  <FormField
+                    control={control}
+                    name="adset_data.bid_amount"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel data-required="true">Bid Amount</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min={0}
+                            placeholder="Enter bid amount"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
 
                 {/* Location */}
                 <FormField
@@ -299,13 +389,14 @@ export const TargetingSetup: React.FC<TargetingSetupProps> = ({
                   name="adset_data.targeting.geo_locations.countries"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel data-required='true'>Location</FormLabel>
+                      <FormLabel data-required="true">Location</FormLabel>
                       <FormControl>
                         <MultiSelect
-                          placeholder='Select a location'
-                          choices={countries}
+                          placeholder="Select a location"
+                          choices={COUNTRIES}
                           value={field.value}
-                          onChange={field.onChange} />
+                          onChange={field.onChange}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -322,16 +413,26 @@ export const TargetingSetup: React.FC<TargetingSetupProps> = ({
                         name="adset_data.targeting.age_min"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-sm text-gray-500">Min Age</FormLabel>
-                            <Select onValueChange={(value) => field.onChange(parseInt(value))} defaultValue={field.value?.toString()}>
+                            <FormLabel className="text-sm text-gray-500">
+                              Min Age
+                            </FormLabel>
+                            <Select
+                              onValueChange={(value) =>
+                                field.onChange(parseInt(value))
+                              }
+                              defaultValue={field.value?.toString()}
+                            >
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Min Age" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                {ageOptions.map(age => (
-                                  <SelectItem key={`min-${age}`} value={age.toString()}>
+                                {ageOptions.map((age) => (
+                                  <SelectItem
+                                    key={`min-${age}`}
+                                    value={age.toString()}
+                                  >
                                     {age}
                                   </SelectItem>
                                 ))}
@@ -349,17 +450,27 @@ export const TargetingSetup: React.FC<TargetingSetupProps> = ({
                         name="adset_data.targeting.age_max"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-sm text-gray-500">Max Age</FormLabel>
-                            <Select onValueChange={(value) => field.onChange(parseInt(value))} defaultValue={field.value?.toString()}>
+                            <FormLabel className="text-sm text-gray-500">
+                              Max Age
+                            </FormLabel>
+                            <Select
+                              onValueChange={(value) =>
+                                field.onChange(parseInt(value))
+                              }
+                              defaultValue={field.value?.toString()}
+                            >
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Max Age" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                {ageOptions.map(age => (
-                                  <SelectItem key={`max-${age}`} value={age.toString()}>
-                                    {age === 65 ? '65+' : age}
+                                {ageOptions.map((age) => (
+                                  <SelectItem
+                                    key={`max-${age}`}
+                                    value={age.toString()}
+                                  >
+                                    {age === 65 ? "65+" : age}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
@@ -383,8 +494,8 @@ export const TargetingSetup: React.FC<TargetingSetupProps> = ({
                         <MultiSelect
                           placeholder="Select genders..."
                           choices={[
-                            { value: 1, label: 'Male' },
-                            { value: 2, label: 'Female' }
+                            { value: 1, label: "Male" },
+                            { value: 2, label: "Female" },
                           ]}
                           value={field.value}
                           onChange={field.onChange}
@@ -400,11 +511,8 @@ export const TargetingSetup: React.FC<TargetingSetupProps> = ({
         </div>
       </div>
       <div className="flex justify-end mt-8">
-        {(adsetType === 'existing' && adsets?.length > 0) && (
-          <Button
-            type="submit"
-            disabled={control._formState?.isSubmitting}
-          >
+        {adsetType === "existing" && adsets?.length > 0 && (
+          <Button type="submit" disabled={control._formState?.isSubmitting}>
             {control._formState?.isSubmitting ? (
               <>
                 <span className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full inline-block" />
@@ -417,14 +525,13 @@ export const TargetingSetup: React.FC<TargetingSetupProps> = ({
               </>
             )}
           </Button>
-        )} 
-        {adsetType === 'new' && <Button
-          type="button"
-          onClick={handleNextStep}
-        >
-          Next
-          <ChevronRight className="ml-2 h-4 w-4" />
-        </Button>}
+        )}
+        {adsetType === "new" && (
+          <Button type="button" onClick={handleNextStep}>
+            Next
+            <ChevronRight className="ml-2 h-4 w-4" />
+          </Button>
+        )}
       </div>
     </div>
   );

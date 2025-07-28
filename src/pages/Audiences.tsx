@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Loader, Plus, Search, Users } from 'lucide-react';
+import {  Plus, Search, Users } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import CreateAudienceDialog from '@/components/audience/CreateAudienceDialog';
 import { getAudiences, Audience } from '@/services/audience';
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import Loading from '@/components/shared/Loader';
 import { useDialog } from '@/hooks/useDialog';
 import StatusDialog from '@/components/shared/StatusDialog';
