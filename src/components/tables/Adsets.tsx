@@ -49,17 +49,20 @@ const AdsetsTable = ({
   const [isLoading, setIsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
-  const fetchAdsets = useCallback(async (page: number) => {
-    setIsLoading(true);
-    try {
-      const res = await getPaginatedAdsets({ id, getFor, page });
-      setAdsets(res);
-      setIsLoading(false);
-    } catch (error) {
-      console.error("failed to fetch adsets: ", error);
-      setIsLoading(false);
-    }
-  }, [getFor, id]);
+  const fetchAdsets = useCallback(
+    async (page: number) => {
+      setIsLoading(true);
+      try {
+        const res = await getPaginatedAdsets({ id, getFor, page });
+        setAdsets(res);
+        setIsLoading(false);
+      } catch (error) {
+        console.error("failed to fetch adsets: ", error);
+        setIsLoading(false);
+      }
+    },
+    [getFor, id]
+  );
 
   useEffect(() => {
     if (id) {
@@ -149,6 +152,14 @@ const AdsetsTable = ({
                     className="cursor-pointer hover:underline hover:text-[#1890ff] decoration-1"
                     onClick={() => {
                       setActiveTab("ads");
+                      setSelectedRows((prev) => ({
+                        ...prev,
+                        adsets: {
+                          ...prev.adsets,
+                          ids: [...prev.adsets.ids, adset.adset_id],
+                          count: prev.adsets.count + 1,
+                        },
+                      }));
                       setSelectedAdset(adset.adset_id);
                     }}
                   >

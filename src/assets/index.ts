@@ -7,5 +7,6 @@ import TargetImg from "./target.svg";
 import ArrowDown from "./arrow-down.svg";
 import ArrowUp from "./arrow-up.svg";
 import FacebookIcon from "./facebook.svg"
+import AdsImg from './ads-img.svg'
 
-export { Logo, OtoLogo, HeroImg, AudioIcon, LandImg, TargetImg, ArrowDown, ArrowUp, FacebookIcon };
+export { Logo, OtoLogo, HeroImg, AudioIcon, LandImg, TargetImg, ArrowDown, ArrowUp, FacebookIcon, AdsImg };

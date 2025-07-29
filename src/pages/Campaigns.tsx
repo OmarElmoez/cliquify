@@ -485,9 +485,9 @@ const Campaigns = () => {
                 value="campaigns"
                 onClick={() => setActiveTab("campaigns")}
                 className={cn(
-                  "text-sm font-semibold flex items-center gap-2 min-w-[180px] h-11 rounded-tl-sm rounded-tr-sm",
+                  "text-sm font-semibold flex items-center gap-2 min-w-[180px] h-11",
                   activeTab === "campaigns" &&
-                    "border-b-2 border-secondaryColor"
+                    "border-b-2 border-b-secondaryColor"
                 )}
               >
                 <FaFolder
@@ -557,7 +557,7 @@ const Campaigns = () => {
                   setSelectedAdset("");
                 }}
                 className={cn(
-                  "text-sm font-semibold bg-[#F5F8FA] flex items-center gap-2 min-w-[180px] h-11 rounded-tl-sm rounded-tr-sm",
+                  "text-sm font-semibold flex items-center gap-2 min-w-[180px] h-11 rounded-tl-sm rounded-tr-sm",
                   activeTab === "ads" && "border-b-2 border-secondaryColor"
                 )}
               >
@@ -661,6 +661,14 @@ const Campaigns = () => {
                                 className="cursor-pointer hover:underline hover:text-[#1890ff] decoration-1"
                                 onClick={() => {
                                   setSelectedCampaignId(campaign.campaign_id);
+                                  setSelectedRows(prev => ({
+                                    ...prev,
+                                    campaigns: {
+                                      ...prev.campaigns,
+                                      ids: [...prev.campaigns.ids, campaign.campaign_id],
+                                      count: prev.campaigns.count + 1
+                                    }
+                                  }))
                                   setActiveTab("adsets");
                                 }}
                               >
