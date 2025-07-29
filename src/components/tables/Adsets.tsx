@@ -208,14 +208,14 @@ const AdsetsTable = ({
                 </TableRow>
               ))
             )}
-            <TableRow className="text-center font-semibold">
+            {adsets?.results.length > 0 && <TableRow className="text-center font-semibold">
               <TableCell>Total:</TableCell>
               <TableCell>{adsets?.count}</TableCell>
               <TableCell></TableCell>
               <TableCell></TableCell>
               <TableCell>87766</TableCell>
-            </TableRow>
-            <TableRow>
+            </TableRow>}
+            {adsets?.results.length > 0 && <TableRow>
               <TableCell colSpan={9}>
                 <section className="flex items-center justify-end gap-8">
                   <div className="text-sm font-medium">
@@ -279,7 +279,7 @@ const AdsetsTable = ({
                   </Pagination>
                 </section>
               </TableCell>
-            </TableRow>
+            </TableRow>}
           </TableBody>
         </Table>
       </div>

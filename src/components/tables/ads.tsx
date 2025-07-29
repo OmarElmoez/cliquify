@@ -139,7 +139,7 @@ const AdsTable = ({
                 </TableRow>
               ))
             )}
-            <TableRow className="text-center font-semibold">
+            {ads?.results.length > 0 && <TableRow className="text-center font-semibold">
               <TableCell>
                 <div className="flex">
                   <div className="flex-1 text-left">Total:</div>
@@ -151,8 +151,8 @@ const AdsTable = ({
               <TableCell>87766</TableCell>
               <TableCell>87766</TableCell>
               <TableCell>87766</TableCell>
-            </TableRow>
-            <TableRow>
+            </TableRow>}
+            {ads?.results.length > 0 && <TableRow>
               <TableCell colSpan={9}>
                 <section className="flex items-center justify-end gap-8">
                   <div className="text-sm font-medium">
@@ -216,7 +216,7 @@ const AdsTable = ({
                   </Pagination>
                 </section>
               </TableCell>
-            </TableRow>
+            </TableRow>}
           </TableBody>
         </Table>
       </div>

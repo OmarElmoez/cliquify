@@ -107,8 +107,6 @@ const Campaigns = () => {
       count: 0,
     },
   });
-
-  console.log('selected Rows: ', selectedRows);
   // const [isAllChecked, setIsAllChecked] = useState(false);
   // const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
   // const isAllChecked = Object.values(checkedItems).every(Boolean);
