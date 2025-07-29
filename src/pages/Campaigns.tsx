@@ -26,13 +26,10 @@ import {
   CampaignsResponse,
   CampaignStatus,
 } from "@/services/campaignService";
-import { formatCampaignDate } from "@/utils/dateFormatters";
 import {
   Pagination,
   PaginationContent,
-  PaginationEllipsis,
   PaginationItem,
-  PaginationLink,
 } from "@/components/ui/pagination";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -41,31 +38,40 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ChevronLeft, ChevronRight, Loader } from "lucide-react";
+import { IoIosSkipBackward, IoIosSkipForward } from "react-icons/io";
+import { FaFolder } from "react-icons/fa";
+import {
+  MdAddBox,
+  MdOutlineRefresh,
+  MdOutlineNavigateNext,
+  MdEqualizer,
+} from "react-icons/md";
+import { GrFormPrevious } from "react-icons/gr";
+import { BsGraphUpArrow } from "react-icons/bs";
+import { IoMdClose } from "react-icons/io";
+import { Loader } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 import { useDialog } from "@/hooks/useDialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AdsetsTable from "@/components/tables/Adsets";
-import getPageNumbers from "@/utils/getPageNumbers";
 import AdsTable from "@/components/tables/ads";
 import refreshCampaigns from "@/services/refreshCampaigns";
-import { MdAddBox, MdOutlineRefresh } from "react-icons/md";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FacebookIcon } from "@/assets";
+import { cn } from "@/lib/utils";
+import { STATUS_INFO } from "@/constants";
 
-const STATUS_INFO = {
-  ACTIVE: {
-    color: "#2DC077",
-    label: 'Active'
+
+
+export type TSelectedRows = {
+  campaigns: {
+    ids: string[],
+    count: number,
   },
-  PAUSED: {
-    color: "#FFC20C",
-    label: 'Paused'
-  },
-  PENDING: {
-    color: "#767EAD",
-    label: 'Pending'
-  },
+  adsets: {
+    ids: string[],
+    count: number
+  }
 }
 
 const Campaigns = () => {
@@ -91,6 +97,18 @@ const Campaigns = () => {
     type: "accounts" | "campaigns";
   }>({ visible: false, type: "accounts" });
   const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [selectedRows, setSelectedRows] = useState<TSelectedRows>({
+    campaigns: {
+      ids: [],
+      count: 0,
+    },
+    adsets: {
+      ids: [],
+      count: 0,
+    },
+  });
+
+  console.log('selected Rows: ', selectedRows);
   // const [isAllChecked, setIsAllChecked] = useState(false);
   // const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
   // const isAllChecked = Object.values(checkedItems).every(Boolean);
@@ -460,73 +478,140 @@ const Campaigns = () => {
           </Card>
         </section>
 
-        <Tabs value={activeTab}>
-          <TabsList className="w-[350px] justify-start gap-16">
-            <TabsTrigger
-              value="campaigns"
-              onClick={() => setActiveTab("campaigns")}
-            >
-              Campaigns
-            </TabsTrigger>
-            <TabsTrigger
-              value="adsets"
-              onClick={() => {
-                setActiveTab("adsets");
-                setSelectedCampaignId("");
-              }}
-            >
-              Ad sets
-            </TabsTrigger>
-            <TabsTrigger
-              value="ads"
-              onClick={() => {
-                setActiveTab("ads");
-                setSelectedAdset("");
-              }}
-            >
-              Ads
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="campaigns">
-            <div className="border rounded-md overflow-hidden">
-              {loading ? (
-                <div className="py-8 text-center">Loading campaigns...</div>
-              ) : campaignsData?.results.length > 0 ? (
-                <Table>
-                  <TableHeader className="bg-[#F5F8FA]">
-                    <TableRow>
-                      <TableHead className="font-semibold text-sm text-blackColor flex items-center justify-center">
-                        {/* <Checkbox
+        <section className="bg-white border rounded-xl overflow-hidden pt-7">
+          <Tabs value={activeTab}>
+            <TabsList className="justify-start gap-16 bg-transparent px-3 pb-4 rounded-sm">
+              <TabsTrigger
+                value="campaigns"
+                onClick={() => setActiveTab("campaigns")}
+                className={cn(
+                  "text-sm font-semibold flex items-center gap-2 min-w-[180px] h-11 rounded-tl-sm rounded-tr-sm",
+                  activeTab === "campaigns" &&
+                    "border-b-2 border-secondaryColor"
+                )}
+              >
+                <FaFolder
+                  size={20}
+                  className={cn(
+                    activeTab === "campaigns"
+                      ? "text-secondaryColor"
+                      : "text-iconColor"
+                  )}
+                />
+                Campaigns
+                {selectedRows.campaigns.count ? <div className="flex items-center justify-between gap-[6px] bg-lightGrayColor rounded-full px-2 py-[6px] text-secondaryColor text-xs font-medium">
+                  {selectedRows.campaigns.count} selected
+                  <div
+                    onClick={() => setSelectedRows(prev => ({
+                      ...prev,
+                      campaigns: {
+                        ids: [],
+                        count: 0
+                      }
+                    }))}
+                  >
+                    <IoMdClose size={16} />
+                  </div>
+                </div>: ""}
+              </TabsTrigger>
+              <TabsTrigger
+                value="adsets"
+                onClick={() => {
+                  setActiveTab("adsets");
+                  setSelectedCampaignId("");
+                }}
+                className={cn(
+                  "text-sm font-semibold flex items-center gap-2 h-11 rounded-tl-sm rounded-tr-sm",
+                  activeTab === "adsets" &&
+                    "border-b-2 border-secondaryColor text-secondaryColor"
+                )}
+              >
+                <MdEqualizer
+                  size={20}
+                  className={cn(
+                    activeTab === "adsets"
+                      ? "text-secondaryColor"
+                      : "text-iconColor"
+                  )}
+                />
+                Ad sets
+                {selectedRows.adsets.count ? <div className="flex items-center justify-between gap-[6px] bg-lightGrayColor rounded-full px-2 py-[6px] text-secondaryColor text-xs font-medium">
+                  {selectedRows.adsets.count} selected
+                  <div
+                    onClick={() => setSelectedRows(prev => ({
+                      ...prev,
+                      adsets: {
+                        ids: [],
+                        count: 0
+                      }
+                    }))}
+                  >
+                    <IoMdClose size={16} />
+                  </div>
+                </div>: ""}
+              </TabsTrigger>
+              <TabsTrigger
+                value="ads"
+                onClick={() => {
+                  setActiveTab("ads");
+                  setSelectedAdset("");
+                }}
+                className={cn(
+                  "text-sm font-semibold bg-[#F5F8FA] flex items-center gap-2 min-w-[180px] h-11 rounded-tl-sm rounded-tr-sm",
+                  activeTab === "ads" && "border-b-2 border-secondaryColor"
+                )}
+              >
+                <BsGraphUpArrow
+                  size={20}
+                  className={cn(
+                    activeTab === "ads"
+                      ? "text-secondaryColor"
+                      : "text-iconColor"
+                  )}
+                />
+                Ads
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="campaigns">
+              <div>
+                {loading ? (
+                  <div className="py-8 text-center">Loading campaigns...</div>
+                ) : campaignsData?.results.length > 0 ? (
+                  <Table>
+                    <TableHeader className="bg-[#F5F8FA]">
+                      <TableRow>
+                        <TableHead className="font-semibold text-sm text-blackColor flex items-center justify-center">
+                          {/* <Checkbox
                           checked={isAllChecked}
                           onCheckedChange={(checked) => toggleAll(!!checked)}
                           className="border-iconColor border-2 data-[state=checked]:bg-[#2FDD60] data-[state=checked]:border-[#2FDD60] w-[18px] h-[18px]"
                         /> */}
-                      </TableHead>
-                      <TableHead className="text-left font-semibold text-sm text-blackColor">
-                        NAME
-                      </TableHead>
-                      <TableHead className="font-semibold text-sm text-blackColor">
-                        On\off
-                      </TableHead>
-                      <TableHead className="font-semibold text-sm text-blackColor">
-                        Status
-                      </TableHead>
-                      <TableHead className="font-semibold text-sm text-blackColor">
-                        Spending
-                      </TableHead>
-                      <TableHead className="font-semibold text-sm text-blackColor">
-                        Clicks
-                      </TableHead>
-                      <TableHead className="font-semibold text-sm text-blackColor">
-                        Conversions
-                      </TableHead>
-                      <TableHead className="font-semibold text-sm text-blackColor">
-                        CPC
-                      </TableHead>
-                      <TableHead className="font-semibold text-sm text-blackColor">
-                        CTR
-                      </TableHead>
-                      {/* <TableHead className="font-semibold text-sm text-blackColor">
+                        </TableHead>
+                        <TableHead className="text-left font-semibold text-sm text-blackColor">
+                          NAME
+                        </TableHead>
+                        <TableHead className="font-semibold text-sm text-blackColor">
+                          On\off
+                        </TableHead>
+                        <TableHead className="font-semibold text-sm text-blackColor">
+                          Status
+                        </TableHead>
+                        <TableHead className="font-semibold text-sm text-blackColor">
+                          Spending
+                        </TableHead>
+                        <TableHead className="font-semibold text-sm text-blackColor">
+                          Clicks
+                        </TableHead>
+                        <TableHead className="font-semibold text-sm text-blackColor">
+                          Conversions
+                        </TableHead>
+                        <TableHead className="font-semibold text-sm text-blackColor">
+                          CPC
+                        </TableHead>
+                        <TableHead className="font-semibold text-sm text-blackColor">
+                          CTR
+                        </TableHead>
+                        {/* <TableHead className="font-semibold text-sm text-blackColor">
                         BUYING TYPE
                       </TableHead>
                       <TableHead className="font-semibold text-sm text-blackColor">
@@ -535,101 +620,195 @@ const Campaigns = () => {
                       <TableHead className="font-semibold text-sm text-blackColor">
                         OBJECTIVE
                       </TableHead> */}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody className="bg-white text-sm text-blackColor">
-                    {campaignsData?.results.map((campaign) => (
-                      <TableRow key={campaign.campaign_id}>
-                        <TableCell className="flex items-center justify-center">
-                          <Checkbox
-                            // checked={checkedItems[campaign.campaign_id] || false}
-                            // onCheckedChange={() => toggleItem(campaign.campaign_id)}
-                            className="border-iconColor border-2 data-[state=checked]:bg-[#2FDD60] data-[state=checked]:border-[#2FDD60] w-[18px] h-[18px]"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <div className="flex shrink-0">
-                              <img src={FacebookIcon} alt="facebook logo" />
-                            </div>
-                            <div
-                              className="cursor-pointer hover:underline hover:text-[#1890ff] decoration-1"
-                              onClick={() => {
-                                setSelectedCampaignId(campaign.campaign_id);
-                                setActiveTab("adsets");
-                              }}
-                            >
-                              {campaign.name}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center justify-center gap-2">
-                            {statusLoading === campaign.campaign_id ? (
-                              <div className="w-10 h-5 flex items-center justify-center">
-                                <Loader className="h-4 w-4 animate-spin" />
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody className="bg-white text-sm text-blackColor">
+                      {campaignsData?.results.map((campaign) => (
+                        <TableRow key={campaign.campaign_id}>
+                          <TableCell className="flex items-center justify-center">
+                            <Checkbox
+                              checked={selectedRows.campaigns.ids.includes(campaign.campaign_id)}
+                              onCheckedChange={() =>
+                                setSelectedRows((prev) => ({
+                                  ...prev,
+                                  campaigns: {
+                                    ...prev.campaigns,
+                                    ids: prev.campaigns.ids.includes(
+                                      campaign.campaign_id
+                                    )
+                                      ? prev.campaigns.ids.filter(
+                                          (id) => id !== campaign.campaign_id
+                                        )
+                                      : [
+                                          ...prev.campaigns.ids,
+                                          campaign.campaign_id,
+                                        ],
+                                    count: prev.campaigns.ids.includes(
+                                      campaign.campaign_id
+                                    ) ? prev.campaigns.count - 1 : prev.campaigns.count + 1
+                                  },
+                                }))
+                              }
+                              className="border-iconColor border-2 data-[state=checked]:bg-[#2FDD60] data-[state=checked]:border-[#2FDD60] w-[18px] h-[18px]"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <div className="flex shrink-0">
+                                <img src={FacebookIcon} alt="facebook logo" />
                               </div>
-                            ) : (
-                              <Switch
-                                checked={campaign.status === "ACTIVE"}
-                                onCheckedChange={(checked) =>
-                                  handleStatusToggle(
-                                    campaign.campaign_id,
-                                    checked ? "ACTIVE" : "PAUSED"
-                                  )
-                                }
-                                className="data-[state=checked]:bg-green-600 data-[state=unchecked]:bg-gray-400"
-                              />
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="flex items-center justify-center gap-4">
-                          <div className="w-[14px] h-[14px] rounded-full" style={{backgroundColor: STATUS_INFO[campaign.status].color}}></div>
-                          {STATUS_INFO[campaign.status].label}
+                              <div
+                                className="cursor-pointer hover:underline hover:text-[#1890ff] decoration-1"
+                                onClick={() => {
+                                  setSelectedCampaignId(campaign.campaign_id);
+                                  setActiveTab("adsets");
+                                }}
+                              >
+                                {campaign.name}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center justify-center gap-2">
+                              {statusLoading === campaign.campaign_id ? (
+                                <div className="w-10 h-5 flex items-center justify-center">
+                                  <Loader className="h-4 w-4 animate-spin" />
+                                </div>
+                              ) : (
+                                <Switch
+                                  checked={campaign.status === "ACTIVE"}
+                                  onCheckedChange={(checked) =>
+                                    handleStatusToggle(
+                                      campaign.campaign_id,
+                                      checked ? "ACTIVE" : "PAUSED"
+                                    )
+                                  }
+                                  className="data-[state=checked]:bg-green-600 data-[state=unchecked]:bg-gray-400"
+                                />
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="flex items-center justify-center gap-4">
+                            <div
+                              className="w-[14px] h-[14px] rounded-full"
+                              style={{
+                                backgroundColor:
+                                  STATUS_INFO[campaign.status].color,
+                              }}
+                            ></div>
+                            <span className="w-10">{STATUS_INFO[campaign.status].label}</span>
                           </TableCell>
                           <TableCell>242.112K</TableCell>
                           <TableCell>87766</TableCell>
                           <TableCell>3423</TableCell>
                           <TableCell>4</TableCell>
                           <TableCell>5</TableCell>
-                        {/* <TableCell>{campaign.buying_type}</TableCell>
+                          {/* <TableCell>{campaign.buying_type}</TableCell>
                         <TableCell>
                           {formatCampaignDate(campaign.created_time)}
                         </TableCell>
                         <TableCell>{campaign.objective}</TableCell> */}
+                        </TableRow>
+                      ))}
+                      <TableRow className="text-center font-semibold">
+                        <TableCell>Total:</TableCell>
+                        <TableCell className="text-left">{campaignsData.count}</TableCell>
+                        <TableCell></TableCell>
+                        <TableCell></TableCell>
+                        <TableCell>87766</TableCell>
+                        <TableCell>3423</TableCell>
+                        <TableCell>4</TableCell>
+                        <TableCell>5</TableCell>
+                        <TableCell>6</TableCell>
                       </TableRow>
-                    ))}
-                    <TableRow className="text-center font-semibold">
-                      <TableCell>Total:</TableCell>
-                      <TableCell>410</TableCell>
-                      <TableCell></TableCell>
-                      <TableCell></TableCell>
-                      <TableCell>87766</TableCell>
-                      <TableCell>3423</TableCell>
-                      <TableCell>4</TableCell>
-                      <TableCell>5</TableCell>
-                      <TableCell>6</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell colSpan={9}>
-                        <div className="text-sm font-medium">Page {paginationMeta.page} of {paginationMeta.pages}</div>
-                        <div>
-                          
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              ) : (
-                <div className="py-8 text-center">
-                  {selectedAccount
-                    ? "No campaigns available for this account."
-                    : "Please select an account to view campaigns."}
-                </div>
-              )}
-            </div>
+                      <TableRow>
+                        <TableCell colSpan={9}>
+                          <section className="flex items-center justify-end gap-8">
+                            <div className="text-sm font-medium">
+                              Page {paginationMeta.page} of{" "}
+                              {paginationMeta.pages}
+                            </div>
+                            <Pagination className="w-fit mx-0">
+                              <PaginationContent className="gap-4">
+                                <PaginationItem className="flex">
+                                  <button
+                                    className={cn(
+                                      currentPage === 1
+                                        ? "cursor-not-allowed text-[#77A0BB]"
+                                        : "cursor-pointer text-[#446D88]"
+                                    )}
+                                    disabled={currentPage === 1}
+                                    onClick={() => handlePageChange(1)}
+                                  >
+                                    <IoIosSkipBackward size={20} />
+                                  </button>
+                                </PaginationItem>
+                                <PaginationItem className="flex">
+                                  <button
+                                    className={cn(
+                                      currentPage === 1
+                                        ? "cursor-not-allowed text-[#77A0BB]"
+                                        : "cursor-pointer text-[#446D88]"
+                                    )}
+                                    disabled={currentPage === 1}
+                                    onClick={() =>
+                                      handlePageChange(currentPage - 1)
+                                    }
+                                  >
+                                    <GrFormPrevious size={20} />
+                                  </button>
+                                </PaginationItem>
+                                <PaginationItem className="flex">
+                                  <button
+                                    className={cn(
+                                      currentPage === paginationMeta.pages
+                                        ? "cursor-not-allowed text-[#77A0BB]"
+                                        : "cursor-pointer text-[#446D88]"
+                                    )}
+                                    disabled={
+                                      currentPage === paginationMeta.pages
+                                    }
+                                    onClick={() =>
+                                      handlePageChange(currentPage + 1)
+                                    }
+                                  >
+                                    <MdOutlineNavigateNext size={20} />
+                                  </button>
+                                </PaginationItem>
+                                <PaginationItem className="flex">
+                                  <button
+                                    className={cn(
+                                      currentPage === paginationMeta.pages
+                                        ? "cursor-not-allowed text-[#77A0BB]"
+                                        : "cursor-pointer text-[#446D88]"
+                                    )}
+                                    disabled={
+                                      currentPage === paginationMeta.pages
+                                    }
+                                    onClick={() =>
+                                      handlePageChange(paginationMeta.pages)
+                                    }
+                                  >
+                                    <IoIosSkipForward size={20} />
+                                  </button>
+                                </PaginationItem>
+                              </PaginationContent>
+                            </Pagination>
+                          </section>
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <div className="py-8 text-center">
+                    {selectedAccount
+                      ? "No campaigns available for this account."
+                      : "Please select an account to view campaigns."}
+                  </div>
+                )}
+              </div>
 
-            {/* {campaignsData?.results.length > 0 && (
+              {/* {campaignsData?.results.length > 0 && (
               <Pagination>
                 <PaginationContent>
                   <PaginationItem>
@@ -654,11 +833,10 @@ const Campaigns = () => {
                 </PaginationContent>
               </Pagination>
             )} */}
-            {paginationMeta && paginationMeta.pages > 1 && (
+              {/* {paginationMeta && paginationMeta.pages > 1 && (
               <div className="mt-6">
                 <Pagination>
                   <PaginationContent>
-                    {/* Previous Page Button */}
                     <PaginationItem>
                       <Button
                         variant="ghost"
@@ -668,11 +846,9 @@ const Campaigns = () => {
                         className="flex items-center gap-1"
                       >
                         <ChevronLeft className="h-4 w-4" />
-                        {/* <span>Previous</span> */}
                       </Button>
                     </PaginationItem>
 
-                    {/* Page Numbers */}
                     {getPageNumbers({ paginationMeta }).map((pageNum) => (
                       <PaginationItem key={pageNum} className="cursor-pointer">
                         {pageNum === "ellipsis" ? (
@@ -688,7 +864,6 @@ const Campaigns = () => {
                       </PaginationItem>
                     ))}
 
-                    {/* Next Page Button */}
                     <PaginationItem>
                       <Button
                         variant="ghost"
@@ -697,30 +872,32 @@ const Campaigns = () => {
                         onClick={() => handlePageChange(currentPage + 1)}
                         className="flex items-center gap-1"
                       >
-                        {/* <span>Next</span> */}
                         <ChevronRight className="h-4 w-4" />
                       </Button>
                     </PaginationItem>
                   </PaginationContent>
                 </Pagination>
               </div>
-            )}
-          </TabsContent>
-          <TabsContent value="adsets">
-            <AdsetsTable
-              id={selectedCampaignId || selectedAccount}
-              getFor={selectedCampaignId ? "campaign" : "account"}
-              setActiveTab={setActiveTab}
-              setSelectedAdset={setSelectedAdset}
-            />
-          </TabsContent>
-          <TabsContent value="ads">
-            <AdsTable
-              id={selectedAdset || selectedAccount}
-              getFor={selectedAdset ? "adset" : "account"}
-            />
-          </TabsContent>
-        </Tabs>
+            )} */}
+            </TabsContent>
+            <TabsContent value="adsets">
+              <AdsetsTable
+                id={selectedCampaignId || selectedAccount}
+                getFor={selectedCampaignId ? "campaign" : "account"}
+                setActiveTab={setActiveTab}
+                setSelectedAdset={setSelectedAdset}
+                selectedRows={selectedRows}
+                setSelectedRows={setSelectedRows}
+              />
+            </TabsContent>
+            <TabsContent value="ads">
+              <AdsTable
+                id={selectedAdset || selectedAccount}
+                getFor={selectedAdset ? "adset" : "account"}
+              />
+            </TabsContent>
+          </Tabs>
+        </section>
 
         {/* Status Dialog for both errors and success messages */}
         <StatusDialog
