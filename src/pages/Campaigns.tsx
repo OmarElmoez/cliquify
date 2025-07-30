@@ -62,17 +62,16 @@ import { cn } from "@/lib/utils";
 import { STATUS_INFO } from "@/constants";
 import { useAdAccountStore } from "@/hooks";
 
-
 export type TSelectedRows = {
   campaigns: {
-    ids: string[],
-    count: number,
-  },
+    ids: string[];
+    count: number;
+  };
   adsets: {
-    ids: string[],
-    count: number
-  }
-}
+    ids: string[];
+    count: number;
+  };
+};
 
 const Campaigns = () => {
   const [adAccounts, setAdAccounts] = useState<AdAccount[]>([]);
@@ -157,6 +156,10 @@ const Campaigns = () => {
     }
   };
 
+  useEffect(() => {
+    loadAdAccounts();
+  }, []);
+
   const loadCampaigns = async (page: number) => {
     try {
       setLoading(true);
@@ -181,6 +184,13 @@ const Campaigns = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // Fetch campaigns when account is selected
+    if (selectedAccount) {
+      loadCampaigns(1);
+    }
+  }, [selectedAccount]);
 
   const handleRefreshCampaigns = async () => {
     // try {
@@ -236,10 +246,6 @@ const Campaigns = () => {
     setCurrentPage(1); // Reset to first page when account changes
   };
 
-  const handleStatusToggle = async (
-    campaignId: string,
-    currentStatus: CampaignStatus
-  ) => {
   const handleStatusToggle = async (
     campaignId: string,
     currentStatus: CampaignStatus
@@ -497,20 +503,26 @@ const Campaigns = () => {
                   )}
                 />
                 Campaigns
-                {selectedRows.campaigns.count ? <div className="flex items-center justify-between gap-[6px] bg-lightGrayColor rounded-full px-2 py-[6px] text-secondaryColor text-xs font-medium">
-                  {selectedRows.campaigns.count} selected
-                  <div
-                    onClick={() => setSelectedRows(prev => ({
-                      ...prev,
-                      campaigns: {
-                        ids: [],
-                        count: 0
+                {selectedRows.campaigns.count ? (
+                  <div className="flex items-center justify-between gap-[6px] bg-lightGrayColor rounded-full px-2 py-[6px] text-secondaryColor text-xs font-medium">
+                    {selectedRows.campaigns.count} selected
+                    <div
+                      onClick={() =>
+                        setSelectedRows((prev) => ({
+                          ...prev,
+                          campaigns: {
+                            ids: [],
+                            count: 0,
+                          },
+                        }))
                       }
-                    }))}
-                  >
-                    <IoMdClose size={16} />
+                    >
+                      <IoMdClose size={16} />
+                    </div>
                   </div>
-                </div>: ""}
+                ) : (
+                  ""
+                )}
               </TabsTrigger>
               <TabsTrigger
                 value="adsets"
@@ -533,20 +545,26 @@ const Campaigns = () => {
                   )}
                 />
                 Ad sets
-                {selectedRows.adsets.count ? <div className="flex items-center justify-between gap-[6px] bg-lightGrayColor rounded-full px-2 py-[6px] text-secondaryColor text-xs font-medium">
-                  {selectedRows.adsets.count} selected
-                  <div
-                    onClick={() => setSelectedRows(prev => ({
-                      ...prev,
-                      adsets: {
-                        ids: [],
-                        count: 0
+                {selectedRows.adsets.count ? (
+                  <div className="flex items-center justify-between gap-[6px] bg-lightGrayColor rounded-full px-2 py-[6px] text-secondaryColor text-xs font-medium">
+                    {selectedRows.adsets.count} selected
+                    <div
+                      onClick={() =>
+                        setSelectedRows((prev) => ({
+                          ...prev,
+                          adsets: {
+                            ids: [],
+                            count: 0,
+                          },
+                        }))
                       }
-                    }))}
-                  >
-                    <IoMdClose size={16} />
+                    >
+                      <IoMdClose size={16} />
+                    </div>
                   </div>
-                </div>: ""}
+                ) : (
+                  ""
+                )}
               </TabsTrigger>
               <TabsTrigger
                 value="ads"
@@ -625,7 +643,9 @@ const Campaigns = () => {
                         <TableRow key={campaign.campaign_id}>
                           <TableCell className="flex items-center justify-center">
                             <Checkbox
-                              checked={selectedRows.campaigns.ids.includes(campaign.campaign_id)}
+                              checked={selectedRows.campaigns.ids.includes(
+                                campaign.campaign_id
+                              )}
                               onCheckedChange={() =>
                                 setSelectedRows((prev) => ({
                                   ...prev,
@@ -643,7 +663,9 @@ const Campaigns = () => {
                                         ],
                                     count: prev.campaigns.ids.includes(
                                       campaign.campaign_id
-                                    ) ? prev.campaigns.count - 1 : prev.campaigns.count + 1
+                                    )
+                                      ? prev.campaigns.count - 1
+                                      : prev.campaigns.count + 1,
                                   },
                                 }))
                               }
@@ -659,14 +681,17 @@ const Campaigns = () => {
                                 className="cursor-pointer hover:underline hover:text-[#1890ff] decoration-1"
                                 onClick={() => {
                                   setSelectedCampaignId(campaign.campaign_id);
-                                  setSelectedRows(prev => ({
+                                  setSelectedRows((prev) => ({
                                     ...prev,
                                     campaigns: {
                                       ...prev.campaigns,
-                                      ids: [...prev.campaigns.ids, campaign.campaign_id],
-                                      count: prev.campaigns.count + 1
-                                    }
-                                  }))
+                                      ids: [
+                                        ...prev.campaigns.ids,
+                                        campaign.campaign_id,
+                                      ],
+                                      count: prev.campaigns.count + 1,
+                                    },
+                                  }));
                                   setActiveTab("adsets");
                                 }}
                               >
@@ -702,7 +727,9 @@ const Campaigns = () => {
                                   STATUS_INFO[campaign.status].color,
                               }}
                             ></div>
-                            <span className="w-10">{STATUS_INFO[campaign.status].label}</span>
+                            <span className="w-10">
+                              {STATUS_INFO[campaign.status].label}
+                            </span>
                           </TableCell>
                           <TableCell>242.112K</TableCell>
                           <TableCell>87766</TableCell>
@@ -718,7 +745,9 @@ const Campaigns = () => {
                       ))}
                       <TableRow className="text-center font-semibold">
                         <TableCell>Total:</TableCell>
-                        <TableCell className="text-left">{campaignsData.count}</TableCell>
+                        <TableCell className="text-left">
+                          {campaignsData.count}
+                        </TableCell>
                         <TableCell></TableCell>
                         <TableCell></TableCell>
                         <TableCell>87766</TableCell>
@@ -924,4 +953,4 @@ const Campaigns = () => {
   );
 };
 
-export default Campaigns
+export default Campaigns;
