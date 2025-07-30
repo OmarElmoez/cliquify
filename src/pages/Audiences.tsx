@@ -7,6 +7,7 @@ import { getAudiences, Audience } from '@/services/audience';
 import Loading from '@/components/shared/Loader';
 import { useDialog } from '@/hooks/useDialog';
 import StatusDialog from '@/components/shared/StatusDialog';
+import { useAdAccountStore } from '@/hooks';
 
 
 const Audiences = () => {
@@ -23,10 +24,12 @@ const Audiences = () => {
     handleDialogClose
   } = useDialog();
 
+  const selectedAdAccountId = useAdAccountStore(state => state.selectedAdAccountId);
+
   useEffect(() => {
     const fetchAudiences = async () => {
       try {
-        const response = await getAudiences();
+        const response = await getAudiences({account_id: selectedAdAccountId});
         setAudiencesData(response);
       } catch (error) {
         console.error('Error fetching audiences:', error);
@@ -36,7 +39,7 @@ const Audiences = () => {
     };
 
     fetchAudiences();
-  }, []);
+  }, [selectedAdAccountId]);
 
   const handleSuccessfullState = (state: boolean) => {
     setIsSuccessfull(state)
@@ -52,19 +55,19 @@ const Audiences = () => {
     }
     
     return () => clearTimeout(handler)
-  }, [isSuccessfull])
+  }, [isSuccessfull, showDialog])
 
-  const handlePage = async (url: string) => {
-    setIsLoading(true);
-    try {
-      const response = await getAudiences(url);
-      setAudiencesData(response);
-    } catch (error) {
-      console.error('Error fetching audiences:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // const handlePage = async (url: string) => {
+  //   setIsLoading(true);
+  //   try {
+  //     const response = await getAudiences(url);
+  //     setAudiencesData(response);
+  //   } catch (error) {
+  //     console.error('Error fetching audiences:', error);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
   return (
     <>
       {isLoading ? (

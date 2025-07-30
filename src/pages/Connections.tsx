@@ -8,35 +8,13 @@ import { Badge } from "@/components/ui/badge";
 import { signInWithMeta } from '@/services/authService';
 import { AdAccount, getAdAccounts } from '@/services/adAccountService';
 import Loading from '@/components/shared/Loader';
-import { access } from 'fs';
 import checkConnections from '@/services/check-connections';
 import StatusDialog from '@/components/shared/StatusDialog';
 import { useDialog } from '@/hooks/useDialog';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
 import deleteMetaAdAccount from '@/services/deleteMetaAdAccount';
+import { useAdAccountStore } from '@/hooks';
 
-// Mock data
-const mockFacebookAccounts = [
-  {
-    id: 'fb-123',
-    name: 'test-ad-account',
-    isActive: true,
-    connectedBy: '1 person',
-    connectedDate: 'April 26, 2025',
-    autoTracking: true
-  }
-];
-
-const mockGoogleAccounts = [
-  {
-    id: 'g-456',
-    name: 'متجر مفهوم الذكرى (1839-975-643)',
-    isActive: true,
-    connectedBy: '1 person',
-    connectedDate: 'April 26, 2025',
-    autoTracking: true
-  }
-];
 
 // Platform Icons
 const FacebookIcon = () => (
@@ -238,6 +216,8 @@ const Connections = () => {
     handleDialogClose
   } = useDialog();
 
+  const setAdAccountId = useAdAccountStore(state => state.setSelectedAdAccountId)
+
   useEffect(() => {
 
     const fetchAdAccounts = async () => {
@@ -248,6 +228,9 @@ const Connections = () => {
         //   return;
         // }
         setAdAccounts(res.data);
+        if (res.data?.length > 0) {
+          setAdAccountId(res.data[0].id)
+        }
       } catch (error) {
         console.log('failed to fetch ad accounts', error);
         throw error;

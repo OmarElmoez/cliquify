@@ -60,7 +60,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { FacebookIcon } from "@/assets";
 import { cn } from "@/lib/utils";
 import { STATUS_INFO } from "@/constants";
-
+import { useAdAccountStore } from "@/hooks";
 
 
 export type TSelectedRows = {
@@ -76,7 +76,13 @@ export type TSelectedRows = {
 
 const Campaigns = () => {
   const [adAccounts, setAdAccounts] = useState<AdAccount[]>([]);
-  const [selectedAccount, setSelectedAccount] = useState<string>("");
+  // const [selectedAccount, setSelectedAccount] = useState<string>("");
+  const selectedAccount = useAdAccountStore(
+    (state) => state.selectedAdAccountId
+  );
+  const setSelectedAccount = useAdAccountStore(
+    (state) => state.setSelectedAdAccountId
+  );
   const [loading, setLoading] = useState<boolean>(false);
   const [statusLoading, setStatusLoading] = useState<string | null>(null); // Store the campaign ID that's being updated
   const [isError, setIsError] = useState(false);
@@ -128,22 +134,6 @@ const Campaigns = () => {
 
   const navigate = useNavigate();
 
-  // useEffect(() => {
-  //   const token = localStorage.getItem('access_token');
-  //   if(token)
-  // }, [])
-
-  useEffect(() => {
-    loadAdAccounts();
-  }, []);
-
-  useEffect(() => {
-    // Fetch campaigns when account is selected
-    if (selectedAccount) {
-      loadCampaigns(1);
-    }
-  }, [selectedAccount]);
-
   const loadAdAccounts = async () => {
     try {
       setLoading(true);
@@ -154,9 +144,6 @@ const Campaigns = () => {
         showDialog("error", "An Error Occurred", res, true);
       }
       setAdAccounts(res.data);
-      if (res.data.length > 0) {
-        setSelectedAccount(res.data[0].id);
-      }
     } catch (error) {
       setIsError(true);
       // Show retry action after 1 second
@@ -253,6 +240,10 @@ const Campaigns = () => {
     campaignId: string,
     currentStatus: CampaignStatus
   ) => {
+  const handleStatusToggle = async (
+    campaignId: string,
+    currentStatus: CampaignStatus
+  ) => {
     try {
       setStatusLoading(campaignId);
       const response = await updateCampaignStatus(campaignId, currentStatus);
@@ -262,8 +253,16 @@ const Campaigns = () => {
         loadCampaigns(currentPage);
 
         showDialog("success", "Status Updated", response.message, true);
+        showDialog("success", "Status Updated", response.message, true);
       }
     } catch (error) {
+      console.error("Error updating campaign status:", error);
+      showDialog(
+        "error",
+        "Status Update Failed",
+        "Failed to update campaign status. Please try again later.",
+        true
+      );
       console.error("Error updating campaign status:", error);
       showDialog(
         "error",
@@ -277,6 +276,7 @@ const Campaigns = () => {
   };
 
   // const handleStatusToggle = (campaignId: string, currentStatus: string) => {
+  //   setCampaignsData(campaignsData.results.map(campaign =>
   //   setCampaignsData(campaignsData.results.map(campaign =>
   //     campaign.id === campaignId ? { ...campaign, status: currentStatus === "ACTIVE" ? "PAUSED" : "ACTIVE" } : campaign
   //   ));
@@ -924,4 +924,4 @@ const Campaigns = () => {
   );
 };
 
-export default Campaigns;
+export default Campaigns

@@ -7,9 +7,9 @@ export type Audience = {
   rule: string;
 };
 
-export const getAudiences = async (paginationUrl?: string): Promise<Audience[]> => {
+export const getAudiences = async ({account_id}: {account_id: string}): Promise<Audience[]> => {
   // const url = paginationUrl ? `${paginationUrl}` : '/custom-audiences/';
-  const url = '/custom-audiences/';
+  const url = `/custom-audiences/?account_id=${account_id}`;
   try {
     const response = await axiosInstance.get(url);
     return response.data;
